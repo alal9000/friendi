@@ -1,0 +1,111 @@
+{% extends "app/main.html" %} {% load static %} {% block content %}
+
+<style>
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 5px;
+    object-fit: cover;
+  }
+
+  hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  }
+
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+</style>
+
+<!-- main section -->
+<section>
+  <div class="container">
+    {% if messages %}
+    <div>
+      {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="row">
+      <div class="col viewport-height">
+        <!-- Page header -->
+        <section class="mb-5">
+          <h1 class="mb-4">Friends of {{ profile.user.first_name }}</h1>
+          <h3>Search friends</h3>
+          <input
+            type="text"
+            id="search-input"
+            class="form-control w-50 p-2 rounded border border-grey mb-2"
+            placeholder="Name..."
+          />
+        </section>
+        <!-- end -->
+
+        <ul class="list-unstyled">
+          {% if friends %} {% for friend in friends %}
+          <li class="mb-3">
+            <a
+              class="text-decoration-none friend-link"
+              href="{% url 'profile' friend.id %}"
+              ><img class="avatar" src="{{ friend.profile_pic.url }}" alt="" />
+              <p class="username">{{ friend.user.first_name }}</p>
+              <!-- Only show unfriend form if the current user matches the profile owner -->
+              {% if request.user.profile == profile %}
+              <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="friend_id" value="{{ friend.id }}" />
+                <button type="submit" class="btn btn-danger">Unfriend</button>
+              </form>
+              {% endif %}
+              <!-- end unfriend form -->
+              <hr class="style-one" />
+            </a>
+          </li>
+
+          {% endfor %} {% else %}
+          <p><em>No friends showing</em></p>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    function filterFriends() {
+      var input = document.getElementById("search-input").value.toLowerCase();
+      var friendLinks = document.querySelectorAll(".friend-link");
+      friendLinks.forEach(function (link) {
+        var username = link
+          .querySelector(".username")
+          .textContent.toLowerCase();
+        if (username.includes(input)) {
+          link.style.display = "block";
+        } else {
+          link.style.display = "none";
+        }
+      });
+    }
+
+    document
+      .getElementById("search-input")
+      .addEventListener("input", filterFriends);
+  });
+</script>
+
+{% endblock %}

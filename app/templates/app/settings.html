@@ -1,0 +1,99 @@
+{% extends "app/main.html" %}
+{% block content %}
+
+<style>
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+
+  hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  }
+</style>
+
+<div class="container">
+  {% if messages %}
+  <div>
+    {% for message in messages %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="row">
+    <div class="col viewport-height">
+      <!-- user detail form -->
+      <div class="card card-body mt-2">
+        <h5 class="card-title">User Details</h5>
+        <form method="POST" action="" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{user_form.as_p}}
+
+          <input class="btn btn-primary" type="submit" name="user-details" value="update-details">
+        </form>
+      </div>
+      <div class="card card-body mt-2">
+        <h5 class="card-title">Profile Details</h5>
+        <form method="POST" action="" class="mt-2 d-flex align-items-center">
+          {% csrf_token %}
+          <p class="m-0 me-2">Show / Hide Friend Count:</p>
+          <button type="submit" class="btn btn-primary">
+            {% if profile.friend_visibility %}
+            <input type="hidden" name="friend_visibility" value="hide">
+            Hide Friends
+            {% else %}
+            <input name="friend_visibility" type="hidden" value="show">
+            Show Friends
+            {% endif %}
+          </button>
+        </form>
+        <form id="delete-account-form" method="POST" action="{% url 'delete_account' %}" enctype="multipart/form-data"
+          class="mt-2 d-flex align-items-center">
+          {% csrf_token %}
+          <p class="m-0 me-2">Delete Your Account Permanently:</p>
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+            Delete Account
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="confirmDeleteModalLabel">Confirm Account Deletion</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete your account permanently? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="delete-account-btn">Delete Account</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var button = document.getElementById("delete-account-btn");
+
+    button.addEventListener("click", function () {
+      document.getElementById('delete-account-form').submit();
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% load static %}
+
+<style>
+  .logo img {
+    height: 50px; /* Adjust the height to half (e.g., from 40px to 20px) */
+    width: auto;  /* Maintain the aspect ratio */
+  }
+
+  .notification-icon {
+    color: #c0c0c0;
+    font-size: 1.2rem;
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+  <div class="container">
+    <!-- Logo -->
+    <a class="nav-link me-3 fw-bold fs-5 logo" href="{% url 'home' %}"><img src="{% static 'images/site-logo5.PNG' %}" alt="Friendi Logo"></a>
+    <!-- End Logo -->
+
+    <!-- Notification Bell -->
+    {% if request.user.is_authenticated %}
+      <a class="nav-link d-lg-none ms-auto" href="{% url 'notifications' %}">
+        <i class="bi bi-bell-fill notification-icon"></i>
+        {% if unread_count > 0 %}
+          <span class="badge bg-danger rounded-circle">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+    {% endif %}
+    <!-- End Notification Bell -->
+
+    <!-- Hamburger Button -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <!-- End Hamburger Button -->
+
+    <!-- Leftside Nav Links -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'home' %}">Events</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'create' %}">Create Event</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'recommendations' %}">Recommendations</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'about' %}">About</a>
+        </li>
+      </ul>
+      <!-- End Leftside Nav Links -->
+
+      <!-- Right side Nav Links -->
+      <ul class="navbar-nav ms-auto">
+        {% if request.user.is_authenticated %}
+        <li class="nav-item d-none d-lg-block">
+          <a class="nav-link" href="{% url 'notifications' %}">
+            <i class="bi bi-bell-fill notification-icon"></i>
+            {% if unread_count > 0 %}
+              <span class="badge bg-danger rounded-circle">{{ unread_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'messages' request.user.profile.id %}">Messages</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile' request.user.profile.id %}">Profile</a>
+          </li>
+          <li class="nav-item me-2">
+            <a class="nav-link" href="{% url 'account_logout' %}">Log Out</a>
+          </li>
+          
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'account_signup' %}">Sign Up</a>
+          </li>
+          <li class="nav-item me-2">
+            <a class="nav-link" href="{% url 'account_login' %}">Login</a>
+          </li>
+        {% endif %}
+      </ul>
+      <!-- End Right side Nav Links -->
+    </div>
+  </div>
+</nav>

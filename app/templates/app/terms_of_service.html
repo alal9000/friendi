@@ -1,0 +1,49 @@
+{% extends "app/main.html" %} {% load static %}{% block content %}
+
+<style>
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+</style>
+
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col viewport-height">
+          <h1>Terms of Service</h1>
+          
+          <h2>Introduction</h2>
+          <p>By accessing and using socializer, you agree to comply with and be bound by these Terms of Service.</p>
+          <h2>Use of the App</h2>
+          <ul>
+            <li>Usage: Socializer is intended for individuals to connect with others for social activities, not for any other purposes including illegal activities. Any reports of illigal activities happening at our events will be reported to police and details of the user passed on.</li>
+            <li>Conduct: You agree to use the app in a respectful and lawful manner. Harassment, discrimination, and inappropriate behavior are strictly prohibited.</li>
+            <li>Content: You are responsible for the content you post and share on the app. Socializer is not liable for user-generated content.</li>
+          </ul>
+          
+          <h2>Privacy</h2>
+          <p>Our Privacy Policy outlines how we collect, use, and protect your personal information. By using Socializer, you agree to the terms of our Privacy Policy. You can read the policy <a href="{% url 'privacy_policy' %}">here</a></p>
+          
+          <h2>Termination</h2>
+          
+          <p>We reserve the right to suspend or terminate your account if you violate these Terms of Service or engage in any conduct that we deem harmful to the app or other users.</p>
+          
+          
+          <h2>Limitation of Liability</h2>
+          <p>We are not liable for any damages arising from your use of the app. Socializer is not responsible for the actions of its users. There are no socializer representatives at our events and we are not liable for any occurances or incidents at the event or there after.  </p>
+          
+          <h2>Changes to Terms</h2>
+          <p>We may update these Terms of Service from time to time. We will notify you of any significant changes by posting the new Terms of Service on our app and updating the effective date.</p>
+          
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+{% endblock %}

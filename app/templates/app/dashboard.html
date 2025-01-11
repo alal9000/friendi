@@ -1,0 +1,151 @@
+{% extends "app/main.html" %} {% block content %} {% load static %}
+
+<style>
+  .hero-image {
+    width: 100%; /* make image take up full width of its container */
+    height: auto; /* maintain aspect ratio */
+  }
+  
+
+
+  .empty-events {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-pic {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+</style>
+
+<!-- messages -->
+{% if messages %}
+<div>
+  {% for message in messages %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- showcase -->
+{% if not request.user.is_authenticated %}
+<section
+  class="bg-dark text-light p-5 p-lg-0 pt-lg-5 text-center text-sm-start"
+>
+  <div class="container">
+    <div class="d-sm-flex align-items-center justify-content-between mb-2">
+      <div>
+        <h1>Making <span style="color: #00bf63;">Friends</span> Easy</h1>
+        <p class="lead my-4">
+          Let the good times roll with Friendi. Events, socials, dining and more. Free for everyone.
+        </p>
+        <a href="{% url 'create' %}" class="btn btn-success btn-lg">
+          Create My Event
+        </a>
+      </div>
+
+      <img class="hero-image" src="{% static 'images/having_fun.svg' %}" alt="home-image" />
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- event cards -->
+<section>
+  <div class="container">
+    {% if user.is_authenticated %}
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-center"
+    >
+      <h1>Hi, {{request.user.first_name }} 👋</h1>
+      <form method="POST" action="{% url 'search_events' %}" class="d-flex">
+        {% csrf_token %}
+        <input
+          class="form-control"
+          name="searched"
+          type="search"
+          placeholder="Search Events or Hosts"
+        />
+        <button type="submit" class="btn btn-secondary ms-1">Search</button>
+      </form>
+    </div>
+
+    {% endif %} {% if events %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for event in events %}
+      <div class="col">
+        <div class="card mt-2">
+          <h5 class="card-title p-2">{{ event.event_title }}</h5>
+          <h6 class="card-title p-2">
+            <em>{{ event.host.user.first_name }}</em> {{ event.host.user.last_name|slice:"1" }}</em>
+          </h6>
+          {% if event.host.profile_pic %}
+          <img
+            src="{{ event.host.profile_pic.url }}"
+            class="profile-pic"
+            alt="{{ event.title }}"
+          />
+          {% else %}
+          <img
+            src="{% static 'images/profile2.png' %}"
+            class="profile-pic"
+            alt="{{ event.title }}"
+          />
+          {% endif %}
+          <div class="card-body">
+            <p class="card-text">{{ event.description|truncatechars:50 }}</p>
+            <a href="{% url 'event' event.id %}" class="btn btn-success"
+              >Browse Event</a
+            >
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination links -->
+    {% if events.has_other_pages %}
+    <div class="pagination mt-2">
+      {% if events.has_previous %}
+      <a href="?page=1" class="page-link">&laquo; First</a>
+      <a href="?page={{ events.previous_page_number }}" class="page-link"
+        >&lsaquo; Previous</a
+      >
+      {% endif %}
+      <span class="current-page"
+        >Page {{ events.number }} of {{ events.paginator.num_pages }}</span
+      >
+      {% if events.has_next %}
+      <a href="?page={{ events.next_page_number }}" class="page-link"
+        >Next &rsaquo;</a
+      >
+      <a href="?page={{ events.paginator.num_pages }}" class="page-link"
+        >Last &raquo;</a
+      >
+      {% endif %}
+    </div>
+    {% endif %} {% else %}
+    <div class="empty-events">
+      <h2 id="empty">wow such empty ^-^</h2>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

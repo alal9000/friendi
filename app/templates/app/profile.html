@@ -1,0 +1,313 @@
+{% extends "app/main.html" %}
+{% block content %}
+{% load account %}
+{% load static %}
+
+<style>
+	.profile-pic {
+		width: 200px;
+    height: 200px;
+		margin: 0 auto;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.avatar {
+		width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 5px;
+		object-fit: cover;
+	}
+
+	.gallery {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+	}
+
+	.gallery-item {
+		flex: 50px 50px 50px 50px;
+		/* Adjust the width of each column as needed */
+		margin-bottom: 20px;
+		background-color: brown;
+	}
+
+	.gallery-item img {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.profile-albums {
+		max-width: 45%;
+	}
+
+	hr.style-one {
+		border: 0;
+		height: 1px;
+		background: #333;
+		background-image: linear-gradient(to right, #ccc, #333, #ccc);
+	}
+
+	.placeholder-italic::placeholder {
+		font-style: italic;
+	}
+</style>
+
+<section>
+	<div class="container mt-2">
+		{% if messages %}
+		<div>
+			{% for message in messages %}
+			<div class="alert alert-success alert-dismissible fade show" role="alert">
+				{{ message }}
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
+			{% endfor %}
+		</div>
+		{% endif %}
+		<div class="row">
+
+			<!-- column 1 -->
+			<div class="col-md">
+				<!-- user name and profile image -->
+				<div class="card card-body mb-2">
+					<form action="#" method="post" class="w-100">
+						{% if request.user.profile != profile %}
+						{% csrf_token %}
+						{% if button == "Add" %}
+						<form action="#" method="post" class="w-100">
+							{% csrf_token %}
+							<button class="btn btn-primary w-100" name="friend-button" value="Add">
+								Add Friend
+							</button>
+						</form>
+						{% elif button == "Pending" %}
+						{% csrf_token %}
+						<button disabled class="btn btn-danger w-100" name="friend-button" value="Pending">
+							Friend Request Pending
+						</button>
+						{% elif button == "Accepted" %}
+						<p>You and {{ profile.user.first_name }} are friends</p>
+						{% endif %}
+						{% endif %}
+					</form>
+					<!-- message button -->
+					{% if request.user.profile != profile %}
+					{% if is_friend %}
+					<a class="btn btn-warning mt-2" href="#" data-bs-toggle="modal" data-bs-target="#reg-modal">Message</a>
+					{% else %}
+					<a class="btn btn-warning mt-2" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Message</a>
+					{% endif %}
+					{% else %}
+					<!-- user settings link -->
+					<a href="{% url 'profile_settings' profile.id %}" class="btn btn-warning w-100 mt-2">User settings</a>
+					{% endif %}
+					<hr class="style-one" />
+					<h3 style="text-align: center">
+						{{ profile.user.first_name }} {{profile.user.last_name|slice:":1" }}
+					</h3>
+					<hr class="style-one" />
+					{% if profile.profile_pic %}
+					<img class="profile-pic" src="{{profile.profile_pic.url}}" />
+					{% else %}
+					<img class="profile-pic" src="{% static 'placeholder/profile2.png' %}" alt="Default Profile Picture" />
+					{% endif %}
+
+
+
+				</div>
+				{% if request.user.profile == profile %}
+				<!-- profile pic form -->
+				<div class="card card-body mb-2">
+					<form method="POST" action="" enctype="multipart/form-data">
+						{% csrf_token %}
+						{{profile_form.as_p}}
+
+						<input class="btn btn-primary" type="submit" name="profile-pic" value="update-image">
+					</form>
+
+				</div>
+
+				<!-- profile description -->
+				<div class="card card-body mb-2">
+					<form method="POST" action="">
+						{% csrf_token %}
+						{{ description_form.as_p }}
+						<button class="btn btn-primary mt-2" type="submit" name="update-description">Update About</button>
+					</form>
+				</div>
+				{% else %}
+				<!-- display age band and description as plain text -->
+				<div class="card card-body mb-2">
+					{% if profile.description %}
+					<h4>About Me</h4>
+					<p>{{ profile.description }}</p>
+					{% endif %}
+					<h4>Age Band</h4>
+					<p>{{ profile.get_age_band_display }}</p>
+				</div>
+
+
+				{% endif %}
+			</div>
+
+
+			<!-- column 2 -->
+			<div class="col-md">
+				<div class="card card-body mb-2">
+					<div>
+						<a class="mb-3 d-inline-block text-decoration-none" href="{% url 'friends' profile.id %}">
+							<h1>Friends {% if friends.count > 0 and friend_visibility %} ({{ friends.count }}) {% endif %}</h1>
+						</a>
+						<ul class="list-unstyled">
+							{% if friends %}
+							{% for friend in friends %}
+							<li class="mb-2">
+								<a href="{% url 'profile' friend.id %}" class="text-decoration-none">
+									{% if friend.profile_pic %}
+									<img class="avatar" src="{{ friend.profile_pic.url }}" alt="Avatar">
+									{% else %}
+									<img class="avatar" src="{% static 'images/default_profile_pic.png' %}" alt="Avatar">
+									{% endif %}
+									{{ friend.user.first_name }}
+								</a>
+							</li>
+							<hr class="style-one">
+							{% endfor %}
+							{% else %}
+							<p><em>No friends showing</em></p>
+							{% endif %}
+						</ul>
+						{% if request.user.profile == profile %}
+						<a href="{% url 'friend_requests' profile.id %}" class="btn btn-primary w-100">Friend Requests</a>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="card card-body mb-2">
+					<div>
+						<h1>Events Attending</h1>
+						<ul class="list-unstyled">
+							{% for event in attended_events %}
+							{% if not event.cancelled %}
+							<li><a href="{% url 'event' event.id %}" class="text-decoration-none"><img class="avatar"
+										src="{{ event.host.profile_pic.url }}" alt="Avatar">{{ event.event_title }}</a></li>
+							<hr class="style-one">
+							{% else %}
+							<li><em>No events to show</em></li>
+							{% endif %}
+							{% empty %}
+							<li><em>No events to show</em></li>
+							{% endfor %}
+						</ul>
+
+						<h1 class="mt-5">Events Hosting </h1>
+						<ul class="list-unstyled">
+							{% for event in hosted_events %}
+							{% if not event.cancelled %}
+							<li>
+								<a href="{% url 'event' event.id %}" class="text-decoration-none">
+									<img class="avatar" src="{{ event.host.profile_pic.url }}" alt="Avatar">
+									{{ event.event_title }}
+								</a>
+							</li>
+							<hr class="style-one">
+							{% endif %}
+							{% empty %}
+							<li><em>No events to show</em></li>
+							{% endfor %}
+						</ul>
+						{% if request.user.profile == profile %}
+						<a href="{% url 'event_requests' profile.id %}" class="btn btn-primary w-100">Event Requests</a>
+						{% endif %}
+					</div>
+				</div>
+
+			</div>
+
+			<!-- column 3 -->
+
+			<div class="col-md">
+				<div class="card card-body mb-2">
+					<div>
+						<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
+								Photo Gallery</a></h1>
+						{% if user_photos %}
+						{% for photo in user_photos %}
+						<a href="{% url 'gallery' profile.id %}"><img src="{{photo.image.url}}" alt=""
+								class="profile-albums mb-2"></a>
+						{% endfor %}
+						{% else %}
+						<p><em>User has not yet uploaded any photos</em></p>
+						{% endif %}
+					</div>
+				</div>
+
+				{% if request.user.profile == profile %}
+				<!-- Invite Friend Form -->
+				<div class="card card-body">
+					<h3>Invite a Friend To Friendi</h3>
+					<form method="post" action="">
+						{% csrf_token %}
+						{{ invite_friend_form.as_p }}
+						<button type="submit" name="invite-friend" class="btn btn-primary">Send Invitation</button>
+					</form>
+				</div>
+				<!-- end invite friend form -->
+				{% endif %}
+			</div>
+			<!-- end column 3 -->
+
+
+
+		</div>
+	</div>
+
+	<!-- messaging modal -->
+	<div class="modal fade" id="reg-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modal-title">Send a message to {{ profile.user.first_name }}</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form method="post" action="{% url 'send_message' profile.id %}">
+						{% csrf_token %}
+						<div class="form-group">
+							<label for="message-text" class="col-form-label">Message:</label>
+							<textarea class="form-control" id="message-text" name="message" required></textarea>
+						</div>
+						<button type="submit" class="btn btn-primary mt-2">Submit</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- end -->
+
+	<!-- DM not friend modal -->
+	<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h1 class="modal-title fs-5" id="exampleModalLabel">Only Friends Can Message</h1>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					Please send a friend request to {{ profile.user.first_name }}
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- end -->
+
+
+</section>
+
+{% endblock %}

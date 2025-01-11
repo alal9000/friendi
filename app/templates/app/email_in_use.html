@@ -1,0 +1,24 @@
+{% extends "app/main.html" %} {% load static %}{% block content %}
+
+<style>
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+</style>
+
+<!-- email in body -->
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col viewport-height">
+          <h1>This email address is already registered for our newsletter</h1>
+          <p><a href="{% url 'home' %}">click here</a> to go back</p>
+
+      </div>
+      </div>
+    </div>
+    
+</section>
+
+{% endblock %}

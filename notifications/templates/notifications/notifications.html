@@ -1,0 +1,104 @@
+{% extends "app/main.html" %}
+{% block content %}
+
+<style>
+.viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .notification {
+    background-color: #f0f0f0; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    padding: 10px; 
+    margin-bottom: 10px; 
+    display: flex; 
+    justify-content: space-between; 
+  }
+
+  .notification-message {
+    margin: 0; 
+    font-weight: bold; 
+  }
+
+  .dismiss-button {
+    background-color: #007bff; 
+    color: #fff; 
+    border: none;
+    border-radius: 3px;
+    padding: 5px 10px; 
+    cursor: pointer; 
+  }
+</style>
+
+<section>
+  <div class="container viewport-height">
+    <div class="row justify-content-center">
+      {% if notifications %}
+        <div class="col-12 col-md-8 col-lg-6 text-center mt-2">
+          <button type="button" class="btn btn-warning" onclick="markAllAsRead()">Dismiss All</button>
+        </div>
+      {% endif %}
+    </div>
+    {% for notification in notifications %}
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-8 col-lg-6">
+        <div class="notification" id="{{notification.id}}">
+          <a href="{{ notification.link }}" class="notification-message" onclick="markAsRead('{{ notification.id }}')">{{ notification.message }}</a>
+          <button type="button" class="dismiss-button" onclick="markAsRead('{{ notification.id }}')">Dismiss</button>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+      <p class="text-center">No notifications</p>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+  function markAsRead(notificationId) {
+    fetch(`/notifications/mark-as-read/${notificationId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        const notificationElement = document.getElementById(`${notificationId}`);
+        if (notificationElement) notificationElement.remove();
+      } else {
+        console.error('Failed to mark notification as read');
+      }
+    })
+    .catch(error => {
+      console.error('Error marking notification as read:', error);
+    });
+  
+  }
+
+  function markAllAsRead() {
+    fetch('/notifications/mark-all-as-read/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        // Remove all notifications from the DOM
+        document.querySelectorAll('.notification').forEach(notification => notification.remove());
+        window.location.reload();
+      } else {
+        console.error('Failed to mark all notifications as read');
+      }
+    })
+    .catch(error => {
+      console.error('Error marking all notifications as read:', error);
+    });
+  }
+</script>
+{% endblock %}

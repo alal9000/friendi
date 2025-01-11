@@ -1,0 +1,134 @@
+{% extends "app/main.html" %}
+{% load allauth i18n %}
+{% load allauth account %}
+{% load socialaccount %}
+
+{% block head_title %}
+{% trans "Signup" %}
+{% endblock head_title %}
+
+{% block content %}
+<style>
+    /* General button styles */
+    .google-button {
+        background-color: #dc4a38;
+        color: #ffffff;
+        text-shadow: none;
+        background-image: none;
+        -webkit-box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        border: none;
+    }
+
+    .facebook-button {
+        background-color: #2e44d3;
+        color: #ffffff;
+        text-shadow: none;
+        background-image: none;
+        -webkit-box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        border: none;
+    }
+
+    /* Styles for login and signup forms */
+    .form-container {
+        padding: 20px;
+        width: 400px;
+        background: rgb(238, 236, 236);
+        border-radius: 10px;
+        box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+        /* Add space between the form and OR section */
+    }
+
+    /* Error message styling */
+    .errorlist {
+        color: red;
+        font-size: 14px;
+        margin-top: 5px;
+        list-style-type: none;
+        /* Remove bullet points */
+        padding-left: 0;
+        /* Remove left padding */
+    }
+
+    .errorlist li {
+        margin-bottom: 5px;
+    }
+
+    /* Styles for OR section and social buttons */
+    .or-section {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .or-section p {
+        margin-bottom: 10px;
+    }
+</style>
+
+<section>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4 d-flex flex-column align-items-center justify-content-center vh-100">
+                <div class="form-container">
+                    <h1>Sign Up</h1>
+                    {% if not SOCIALACCOUNT_ONLY %}
+                    <p>
+                        {% blocktranslate %}Already have an account? Then please <a
+                            href="{{ login_url }}">login</a>.{% endblocktranslate %}
+                    </p>
+                    <form method="post" action="{% url 'account_signup' %}" class="account-signup">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                            {{ form.first_name }}
+                            {{ form.first_name.errors }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                            {{ form.last_name }}
+                            {{ form.last_name.errors }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {{ form.email.errors }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                            {{ form.password1 }}
+                            {{ form.password1.errors }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                            {{ form.password2 }}
+                            {{ form.password2.errors }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">{% trans "Sign Up" %}</button>
+                        {{ redirect_field }}
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="or-section">
+                    <hr>
+                    <p>OR:</p>
+                    <div class="d-flex">
+                        <a href="{% provider_login_url 'google' %}" type="button"
+                            class="btn btn-dark btn-floating mx-1 google-button">
+                            <i class="fab fa-google"></i>Continue with Google
+                        </a>
+                        <!-- <a href="{% provider_login_url 'facebook' %}" type="button"
+                            class="btn btn-dark btn-floating mx-1 facebook-button">
+                            <i class="fab fa-facebook"></i>Continue with Facebook
+                        </a> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

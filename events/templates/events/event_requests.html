@@ -1,0 +1,109 @@
+{% extends "app/main.html" %} {% load static %} {% block content %}
+
+<style>
+  .avatar {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  }
+
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+</style>
+
+<section>
+  <div class="container viewport-height">
+    <div class="row">
+      <h1>Join Requests as Host</h1>
+
+      {% if host_requests %}
+      <ul class="list-unstyled">
+        {% for request in host_requests %}
+        <li>
+          <strong
+            ><a
+              class="text-decoration-none"
+              href="{% url 'event' request.event.id %}"
+              >{{ request.event }}:</a
+            ></strong
+          ><a
+            class="text-decoration-none"
+            href="{% url 'profile' request.sender.id %}"
+            ><img
+              class="avatar"
+              src="{{ request.sender.profile_pic.url}}"
+              alt=""
+            />
+            {{ request.sender.user.first_name }}</a
+          >
+          <form method="post" style="display: inline">
+            {% csrf_token %}
+            <input
+              type="hidden"
+              name="event_id"
+              value="{{ request.event.id }}"
+            />
+            <input
+              type="hidden"
+              name="sender_id"
+              value="{{ request.sender.id }}"
+            />
+            <button
+              class="btn btn-primary"
+              type="submit"
+              name="action"
+              value="approve"
+            >
+              Approve
+            </button>
+            <button
+              class="btn btn-danger"
+              type="submit"
+              name="action"
+              value="deny"
+            >
+              Deny
+            </button>
+          </form>
+          <hr class="style-one" />
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p><em>No requests to show</em></p>
+      {% endif %}
+
+      <h1>Join Requests as Attendee</h1>
+
+      {% if attendee_requests %}
+      <ul class="list-unstyled">
+        {% for request in attendee_requests %}
+        <li>
+          <a
+            class="text-decoration-none"
+            href="{% url 'event' request.event.id %}"
+            >{{ request.event }}
+          </a>
+          <hr class="style-one" />
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p><em>No requests to show</em></p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

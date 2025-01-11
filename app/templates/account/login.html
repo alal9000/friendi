@@ -1,0 +1,130 @@
+{% extends "app/main.html" %}
+{% load i18n %}
+{% load allauth account %}
+{% load socialaccount %}
+
+{% block head_title %}
+{% trans "Sign In" %}
+{% endblock head_title %}
+
+{% block content %}
+<style>
+    /* General button styles */
+    .google-button {
+        background-color: #dc4a38;
+        color: #ffffff;
+        text-shadow: none;
+        background-image: none;
+        -webkit-box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        border: none;
+    }
+
+    .facebook-button {
+        background-color: #2e44d3;
+        color: #ffffff;
+        text-shadow: none;
+        background-image: none;
+        -webkit-box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        box-shadow: 0px 0em 0px 0px rgba(34, 36, 38, 0.15) inset;
+        border: none;
+    }
+
+    /* Styles for login form */
+    .center {
+        padding: 20px;
+        width: 400px;
+        background: rgb(238, 236, 236);
+        border-radius: 10px;
+        box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Error message styling */
+    .errorlist {
+        color: red;
+        font-size: 14px;
+        margin-top: 5px;
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+    .errorlist li {
+        margin-bottom: 5px;
+    }
+
+    /* Styles for OR section and social buttons */
+    .or-section {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .or-section p {
+        margin-bottom: 10px;
+    }
+</style>
+
+<section>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4 d-flex flex-column align-items-center justify-content-center vh-100">
+                <div class="center">
+                    <h1>Login</h1>
+                    {% if not SOCIALACCOUNT_ONLY %}
+                    <p>
+                        {% blocktranslate %}If you have not created an account yet, then please <a
+                            href="{{ signup_url }}">sign up</a>.{% endblocktranslate %}
+                    </p>
+                    <form method="post" action="{% url 'account_login' %}">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        <div class="form-group">
+                            <label for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
+                            {{ form.login }}
+                            {% if form.login.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.login.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.password.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2 w-100">{% trans "Login" %}</button>
+                        {{ redirect_field }}
+                    </form>
+                    {% endif %}
+                    <p class="mt-3">
+                        <a href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+                    </p>
+                </div>
+                <div class="or-section">
+                    <hr>
+                    <p>OR:</p>
+                    <div class="d-flex">
+                        <a href="{% provider_login_url 'google' %}" type="button"
+                            class="btn btn-dark btn-floating mx-1 google-button">
+                            <i class="fab fa-google"></i>Continue with Google
+                        </a>
+                        <!-- <a href="{% provider_login_url 'facebook' %}" type="button"
+                            class="btn btn-dark btn-floating mx-1 facebook-button">
+                            <i class="fab fa-facebook"></i>Continue with Facebook
+                        </a> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

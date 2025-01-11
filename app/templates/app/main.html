@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google Tag Manager -->
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-K8TKDTJ5");
+    </script>
+    <!-- End Google Tag Manager -->
+
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Friendi</title>
+    <link rel="stylesheet" href="{% static 'styles/normalize.css' %}" />
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}" />
+
+    <!-- bootstrap imports -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css"
+    />
+    <!-- native css imports -->
+  </head>
+  <style>
+    .footer {
+      background-color: #2b3034;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .footer h5 {
+      color: white;
+    }
+
+    .footer p {
+      color: white;
+    }
+
+    @media(min-width: 768px) {
+      .news-input {
+        width: 50%;
+      }
+    }
+  </style>
+  <body class="bg-light">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-K8TKDTJ5"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <main>
+      {% include 'app/navbar.html' %} {% block content %} {% endblock%}
+    </main>
+
+    <!-- Newsletter -->
+    {% if not request.user.is_authenticated %}
+    <section class="bg-success text-light p-5">
+      <div class="container" style="max-width: 800px;">
+        <div class="d-md-flex justify-content-between align-items-center">
+          <h3 class="mb-3 mb-md-0">Sign Up For Our Newsletter</h3>
+
+          <form id="newsletter-form" class="input-group news-input mw-50" style="max-width: 600px;" action="{% url 'newsletter_signup' %}" method="post">
+            {% csrf_token %}
+            <input type="text" name="name" class="form-control" placeholder="Name..." />
+            <input type="text" name="email" class="form-control" placeholder="Enter Email..." />
+            <input type="submit" class="btn btn-dark btn-lg" value="Sign Up">
+          </form>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <h5 class="mb-3 mt-3 text-center">
+          &copy; <span id="currentYear"></span> Friendi. All rights reserved.
+        </h5>
+        <p class="mb-5 text-center fst-italic">Sydney, NSW, Australia</p>
+
+        <div class="row justify-content-center">
+          <div class="col-auto">
+            <p>
+              <a class="text-decoration-none text-white href="{% url 'contact' %}"
+                >Contact Us</a
+              >
+            </p>
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'about' %}">About</a>
+            </p>
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'recommendations' %}"
+                >Recommendations</a
+              >
+            </p>
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'faqs' %}">FAQs</a>
+            </p>
+          </div>
+          <div class="col-auto">
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'data_delete' %}"
+                >How to Delete Your Data</a
+              >
+            </p>
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'privacy_policy' %}"
+                >Privacy Policy</a
+              >
+            </p>
+            <p>
+              <a class="text-decoration-none text-white" href="{% url 'tos' %}"
+                >Terms of Service</a
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      var currentYear = new Date().getFullYear();
+      document.getElementById("currentYear").textContent = currentYear;
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    
+  </body>
+</html>

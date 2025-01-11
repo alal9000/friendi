@@ -1,0 +1,73 @@
+{% extends "app/main.html" %}
+{% block content %}
+
+<style>
+  .rec-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .rec-table th,
+  .rec-table td {
+    border: none;
+    padding: 12px;
+    text-align: left;
+  }
+
+  .rec-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+
+  .rec-table tr:first-child {
+    background-color: #ffffff; 
+  }
+
+  .rec-table tr:nth-child(2n) {
+    background-color: #f2f2f2; 
+  }
+
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+</style>
+
+
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col viewport-height">
+        {% if searched %}
+          <h1>You Searched For {{ searched }}</h1>
+          <br>
+          <table class="rec-table">
+            <thead>
+              <tr>
+                <th>Event Title</th>
+                <th>Host</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td><a class="text-decoration-none" href="{% url 'event' event.id %}">{{ event.event_title }}</a></td>
+                <td>{{ event.host.user.first_name }} {{ event.host.user.last_name|slice:":1" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="2">No events found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <h1>You forgot to search for an event or host</h1>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

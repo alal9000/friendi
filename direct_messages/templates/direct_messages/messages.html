@@ -1,0 +1,117 @@
+{% extends "app/main.html" %} {% block content %}
+
+<style>
+  #chat-area-messages {
+    flex: 1;
+    box-sizing: border-box;
+    max-height: 100vh;
+    padding-left: 0;
+    overflow-y: auto;
+  }
+
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  }
+</style>
+
+<section>
+  <div class="container viewport-height">
+    {% if messages %}
+    <div>
+      {% for message in messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="row">
+      <div class="col">
+        <section class="mb-5">
+          <h1>Messages</h1>
+          <h3>Search conversations</h3>
+          <input type="text" id="search-input" class="form-control w-50 p-2 rounded border border-grey mb-2"
+            placeholder="Name..." />
+        </section>
+
+        <section>
+          <div id="chat-area-messages">
+            <h3 class="mb-3">Conversations:</h3>
+            <ul class="p-0 list-unstyled">
+              {% for conversation_data in conversations_data %}
+                {% if conversation_data.other_participant %}
+                  <li class="conversation-item">
+                    <a href="{% url 'conversation' conversation_data.other_participant.id current_profile.id %}" class="text-decoration-none message-link">
+                      <p class="username">
+                        <img class="avatar" src="{{ conversation_data.other_participant.profile_pic.url }}" alt="">{{ conversation_data.other_participant }}
+                      </p>
+                    </a>
+                    <form method="post" action="" class="delete-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="conversation_id" value="{{ conversation_data.conversation.id }}">
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                    <hr class="style-one">
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if conversations_data|length == 0 %}
+              <div>
+                <p><em>No conversations to show</em></p>
+              </div>
+              {% endif %}
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    function filterMessages() {
+      var input = document.getElementById('search-input').value.toLowerCase();
+      var messageLinks = document.querySelectorAll('.message-link');
+      messageLinks.forEach(function (link) {
+        var username = link
+          .querySelector('.username')
+          .textContent.toLowerCase();
+        var parentLi = link.closest('li');
+        if (username.includes(input)) {
+          parentLi.style.display = 'block'; // Show the entire list item
+        } else {
+          parentLi.style.display = 'none'; // Hide the entire list item
+        }
+      });
+    }
+
+    // Add input event listener for search input
+    var searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', filterMessages);
+    }
+  });
+</script>
+
+{% endblock %}
