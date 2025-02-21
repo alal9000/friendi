@@ -25,6 +25,7 @@ class Comment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     comment = models.TextField()
+    date_created = models.DateTimeField(auto_now_add=True, blank=True)
 
     def __str__(self):
         return f"{self.comment}"
