@@ -18,7 +18,7 @@ from allauth.account.forms import (
     ResetPasswordKeyForm,
 )
 
-from .models import Profile, User
+from .models import Profile, StatusUpdate, User
 from events.models import Event
 
 
@@ -56,6 +56,26 @@ class ProfileForm(ModelForm):
         model = Profile
         fields = ("profile_pic",)
         widgets = {"profile_pic": FileInput(attrs={"class": "form-control"})}
+
+
+# status update form
+class StatusUpdateForm(forms.ModelForm):
+    class Meta:
+        model = StatusUpdate  
+        fields = ['content']  
+        widgets = {
+            'content': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': "What's on your mind?",
+                    'rows': 3,
+                }
+            ),
+        }
+        labels = {
+            'content': '', 
+        }
+
 
 
 # update user info

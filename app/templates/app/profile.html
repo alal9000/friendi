@@ -52,6 +52,7 @@
 	.placeholder-italic::placeholder {
 		font-style: italic;
 	}
+	
 </style>
 
 <section>
@@ -128,6 +129,43 @@
 					</form>
 
 				</div>
+
+				<!-- status-update form -->
+				<div class="card card-body mb-2">
+					<!-- latest status update -->
+					{% if latest_status_update %}
+					<div class="status-update">
+							<p><strong>Latest Status: </strong></p>
+							<p>{{ latest_status_update.content }}</p>
+							<p><small>Posted on {{ latest_status_update.date_posted|date:"F j, Y, g:i a" }}</small></p>
+					</div>
+
+					{% else %}
+					<p>No status update yet.</p>
+					{% endif %}
+
+					<!-- Button container for update and clear buttons -->
+					<div class="status-buttons">
+							<form method="POST" action="" enctype="multipart/form-data" style="display:inline-block;">
+									{% csrf_token %}
+									{{ status_form.as_p }}
+									<input class="btn btn-primary" type="submit" name="status-update" value="Update Status">
+									{% if latest_status_update %}
+									<input class="btn btn-danger" id="clear-status-btn" type="submit" value="Clear Status">
+									{% endif %}
+							</form>
+
+							
+							<form method="POST" action="" id="clear-status-form" style="display:inline-block;">
+									{% csrf_token %}
+									<input type="hidden" name="clear-status" value="true">
+							</form>
+					</div>
+
+					
+				</div>
+				<!-- end update status form -->
+
 
 				<!-- profile description -->
 				<div class="card card-body mb-2">
@@ -309,5 +347,12 @@
 
 
 </section>
+
+<script>
+	document.getElementById('clear-status-btn').addEventListener('click', function(event) {
+			event.preventDefault();  
+			document.getElementById('clear-status-form').submit();
+	});
+</script>
 
 {% endblock %}

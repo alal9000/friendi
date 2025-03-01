@@ -1,0 +1,134 @@
+{% extends "app/main.html" %} 
+{% load static %} 
+{% block content %}
+
+<style>
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .status-update {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+
+  .status-meta {
+    font-size: 0.9em;
+    color: #666;
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .status-content {
+    display: flex;
+    align-items: center;
+  }
+
+  .status-text {
+    margin-left: 10px;
+  }
+
+  .react-button {
+    border: none;
+  }
+</style>
+
+<!-- CSRF token -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Newsfeed body -->
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col viewport-height">
+        <h1>Newsfeed</h1>
+
+        <!-- Loop through status updates -->
+        {% for status in status_updates %}
+        <div class="status-update">
+            <div class="status-content">
+                {% if status.profile.profile_pic %}
+                    <img src="{{ status.profile.profile_pic.url }}" class="avatar img-fluid" alt="{{ status.profile.user.username }}">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar">
+                {% endif %}
+                <p class="status-text"><strong>{{ status.profile.user.username }}</strong>: {{ status.content }}</p>
+            </div>
+            <p class="status-meta">Posted on {{ status.date_posted }}</p>
+
+            <!-- Reaction Buttons -->
+            <div class="reaction-buttons">
+              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="heart"><span class="emoji">❤️</span> <span class="count">{{ status.heart_count }}</span></button>
+              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="laugh"><span class="emoji">😂</span> <span class="count">{{ status.laugh_count }}</span></button>
+              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="fire"><span class="emoji">🔥</span> <span class="count">{{ status.fire_count }}</span></button>
+            </div>
+        </div>
+        {% empty %}
+        <p>No status updates available.</p>
+        {% endfor %}
+
+
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll(".react-button").forEach(button => {
+      button.addEventListener("click", function() {
+          const statusId = this.getAttribute("data-status-id");
+          const reactionType = this.getAttribute("data-reaction");
+          react(statusId, reactionType, button);
+      });
+  });
+
+  function react(statusId, reactionType, button) {
+    fetch(`/react/${statusId}/${reactionType}/`, {
+      method: "POST",
+      headers: {
+          "X-CSRFToken": getCSRFToken(),
+          "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+          // Update the reaction count
+          const countElement = button.querySelector('.count');
+          countElement.textContent = data.count;
+  
+          // Update the button's class to indicate the active reaction
+          // Ensure that each button reflects the state correctly
+          document.querySelectorAll(".react-button").forEach(btn => {
+            const reactionTypeForBtn = btn.getAttribute("data-reaction");
+            if (reactionTypeForBtn === reactionType) {
+              // Highlight the active reaction button, if needed
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+      } else {
+          alert(data.message);
+      }
+    })
+    .catch(error => console.error("Error:", error));
+  }
+
+  function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }
+</script>
+
+{% endblock %}

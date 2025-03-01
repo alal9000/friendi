@@ -11,6 +11,12 @@ AGE_BAND_CHOICES = [
     ("36_and_over", "36 and over"),
 ]
 
+REACTION_CHOICES = [
+    ("heart", "❤️"),
+    ("laugh", "😂"),
+    ("fire", "🔥"),
+]
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
@@ -59,6 +65,33 @@ class Profile(models.Model):
 
         # Save only once after processing
         super().save(*args, **kwargs)
+
+
+class StatusUpdate(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='status_updates')
+    content = models.TextField(blank=True, null=True)
+    date_posted = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Status by {self.profile.user.first_name} {self.profile.user.last_name} at {self.date_posted}"
+
+    class Meta:
+        ordering = ['-date_posted']
+
+    def total_reactions(self, reaction_type):
+        return self.reactions.filter(reaction_type=reaction_type).count()
+
+
+class Reaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.ForeignKey(StatusUpdate, on_delete=models.CASCADE, related_name='reactions')
+    reaction_type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+
+    class Meta:
+        unique_together = ("user", "status")  # Prevents duplicate reactions from the same user
+
+    def __str__(self):
+        return f"{self.user.username} reacted {self.get_reaction_type_display()} to {self.status}"
     
     
     
