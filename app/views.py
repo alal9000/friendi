@@ -96,19 +96,23 @@ def search_events(request):
         return render(request, "app/search_events.html", context)
     else:
         return render(request, "app/search_events.html")
-    
+
 
 def newsletter_signup(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
 
         if User.objects.filter(email=email).exists():
-            return render(request, 'app/email_in_use.html', {'message': 'This email is already registered.'})
-        
+            return render(
+                request,
+                "app/email_in_use.html",
+                {"message": "This email is already registered."},
+            )
+
         NewsletterSignup.objects.create(email=email, name=name)
-        
-        return render(request, 'app/thank-you.html')
+
+        return render(request, "app/thank-you.html")
 
 
 def recommendations(request):
@@ -141,7 +145,6 @@ def thank_you(request):
 
 def tos(request):
     return render(request, "app/terms_of_service.html")
-    
 
 
 # class based views
@@ -184,5 +187,3 @@ class CustomLoginView(LoginView):
         )
 
         return response
-    
-

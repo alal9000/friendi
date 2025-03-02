@@ -1,6 +1,4 @@
-{% extends "app/main.html" %} 
-{% load static %} 
-{% block content %}
+{% extends "app/main.html" %} {% load static %} {% block content %}
 
 <style>
   .viewport-height {
@@ -43,7 +41,7 @@
 </style>
 
 <!-- CSRF token -->
-<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
 
 <!-- Newsfeed body -->
 <section>
@@ -55,79 +53,99 @@
         <!-- Loop through status updates -->
         {% for status in status_updates %}
         <div class="status-update">
-            <div class="status-content">
-                {% if status.profile.profile_pic %}
-                    <img src="{{ status.profile.profile_pic.url }}" class="avatar img-fluid" alt="{{ status.profile.user.username }}">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar">
-                {% endif %}
-                <p class="status-text"><strong>{{ status.profile.user.username }}</strong>: {{ status.content }}</p>
-            </div>
-            <p class="status-meta">Posted on {{ status.date_posted }}</p>
+          <div class="status-content">
+            {% if status.profile.profile_pic %}
+            <img src="{{ status.profile.profile_pic.url }}" class="avatar img-fluid"
+              alt="{{ status.profile.user.username }}" />
+            {% else %}
+            <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar" />
+            {% endif %}
+            <p class="status-text">
+              <strong>{{ status.profile.user.username }}</strong>:
+              {{status.content }}
+            </p>
+          </div>
+          <p class="status-meta">Posted on {{ status.date_posted }}</p>
 
-            <!-- Reaction Buttons -->
-            <div class="reaction-buttons">
-              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="heart"><span class="emoji">❤️</span> <span class="count">{{ status.heart_count }}</span></button>
-              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="laugh"><span class="emoji">😂</span> <span class="count">{{ status.laugh_count }}</span></button>
-              <button class="react-button" data-status-id="{{ status.id }}" data-reaction="fire"><span class="emoji">🔥</span> <span class="count">{{ status.fire_count }}</span></button>
-            </div>
+          <!-- Reaction Buttons -->
+          <div class="reaction-buttons">
+            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="heart">
+              <span class="emoji">❤️</span>
+              <span class="count">{{ status.heart_count }}</span>
+            </button>
+            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="laugh">
+              <span class="emoji">😂</span>
+              <span class="count">{{ status.laugh_count }}</span>
+            </button>
+            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="fire">
+              <span class="emoji">🔥</span>
+              <span class="count">{{ status.fire_count }}</span>
+            </button>
+
+          </div>
         </div>
         {% empty %}
         <p>No status updates available.</p>
         {% endfor %}
-
-
-
       </div>
     </div>
   </div>
 </section>
 
 <script>
-  document.querySelectorAll(".react-button").forEach(button => {
-      button.addEventListener("click", function() {
-          const statusId = this.getAttribute("data-status-id");
-          const reactionType = this.getAttribute("data-reaction");
-          react(statusId, reactionType, button);
-      });
+  document.querySelectorAll(".react-button").forEach((button) => {
+    button.addEventListener("click", function () {
+      const statusId = this.getAttribute("data-status-id");
+      const reactionType = this.getAttribute("data-reaction");
+      react(statusId, reactionType, button);
+    });
   });
 
   function react(statusId, reactionType, button) {
-    fetch(`/react/${statusId}/${reactionType}/`, {
-      method: "POST",
-      headers: {
+    const requestData = {
+      status_id: statusId,
+      reaction_type: reactionType,
+    };
+
+    // Log the body before sending it to the server
+    console.log("Request body being sent:", JSON.stringify(requestData));
+
+
+    fetch(`react/${statusId}/${reactionType}/`, {
+        method: "POST",
+        headers: {
           "X-CSRFToken": getCSRFToken(),
-          "Content-Type": "application/json"
-      },
-      body: JSON.stringify({})
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-          // Update the reaction count
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status_id: statusId,
+          reaction_type: reactionType,
+        }),
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Received data:", data);
+        if (data.success) {
+          // Find the count element for the corresponding reaction
           const countElement = button.querySelector('.count');
-          countElement.textContent = data.count;
-  
-          // Update the button's class to indicate the active reaction
-          // Ensure that each button reflects the state correctly
-          document.querySelectorAll(".react-button").forEach(btn => {
-            const reactionTypeForBtn = btn.getAttribute("data-reaction");
-            if (reactionTypeForBtn === reactionType) {
-              // Highlight the active reaction button, if needed
-              btn.classList.add('active');
-            } else {
-              btn.classList.remove('active');
-            }
-          });
-      } else {
-          alert(data.message);
-      }
-    })
-    .catch(error => console.error("Error:", error));
+
+          // Update the count with the new value from the response
+          if (reactionType === "heart") {
+            countElement.textContent = data.heart_count;
+          } else if (reactionType === "laugh") {
+            countElement.textContent = data.laugh_count;
+          } else if (reactionType === "fire") {
+            countElement.textContent = data.fire_count;
+          }
+        } else {
+          console.error("Error:", data.error);
+        }
+      })
+      .catch((error) => console.error("Error:", error));
   }
 
   function getCSRFToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
 </script>
 

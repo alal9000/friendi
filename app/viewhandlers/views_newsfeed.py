@@ -1,8 +1,11 @@
+import json
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-
+from django.contrib.auth.decorators import login_required
 from app.models import Reaction, StatusUpdate
 from friends.models import Friend
+from django.db.models import F
+
 
 def newsfeed(request):
     if not request.user.is_authenticated:
@@ -11,58 +14,87 @@ def newsfeed(request):
     current_user_profile = request.user.profile  # Get the logged-in user's profile
 
     # Get a list of friend profile IDs
-    sender_friends = list(Friend.objects.filter(
-        sender=current_user_profile, status="accepted"
-    ).values_list("receiver_id", flat=True))
+    sender_friends = list(
+        Friend.objects.filter(
+            sender=current_user_profile, status="accepted"
+        ).values_list("receiver_id", flat=True)
+    )
 
-    receiver_friends = list(Friend.objects.filter(
-        receiver=current_user_profile, status="accepted"
-    ).values_list("sender_id", flat=True))
+    receiver_friends = list(
+        Friend.objects.filter(
+            receiver=current_user_profile, status="accepted"
+        ).values_list("sender_id", flat=True)
+    )
 
     # Combine both lists and include the current user
     profiles_to_include = sender_friends + receiver_friends + [current_user_profile.id]
 
     # Get status updates from both the user and their friends
-    status_updates = StatusUpdate.objects.filter(profile__id__in=profiles_to_include).order_by('-date_posted')
-
-    # Calculate reaction counts for each status
-    for status in status_updates:
-        status.heart_count = status.total_reactions('heart')
-        status.laugh_count = status.total_reactions('laugh')
-        status.fire_count = status.total_reactions('fire')
+    status_updates = StatusUpdate.objects.filter(
+        profile__id__in=profiles_to_include
+    ).order_by("-date_posted")
 
     return render(request, "app/newsfeed.html", {"status_updates": status_updates})
 
 
+@login_required
 def react_to_status(request, status_id, reaction_type):
-    if request.method == "POST":
-        if not request.user.is_authenticated:
-            return JsonResponse({"success": False, "message": "User not logged in."}, status=401)
-
-        try:
-            status = StatusUpdate.objects.get(id=status_id)
-        except StatusUpdate.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Status not found."}, status=404)
-
-        # Ensure user can react multiple times with different reactions
-        reaction, created = Reaction.objects.get_or_create(
-            user=request.user, status=status, reaction_type=reaction_type
+    # Ensure that the reaction type is valid
+    valid_reactions = ["heart", "laugh", "fire"]
+    if reaction_type not in valid_reactions:
+        return JsonResponse(
+            {"success": False, "error": "Invalid reaction type"}, status=400
         )
 
-        if created:
-            toggled_off = False
-        else:
-            # If reaction exists, toggle it off (remove it)
-            reaction.delete()
-            toggled_off = True
+    # Try to find the status update by the given id
+    try:
+        status_update = StatusUpdate.objects.get(id=status_id)
+    except StatusUpdate.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Status not found"}, status=404)
 
-        # Get updated reaction count
-        count = status.total_reactions(reaction_type)
+    # Get the current user (who is reacting)
+    user = request.user
 
-        return JsonResponse({
+    # Check if the user has already reacted to the status with the same reaction
+    existing_reaction = Reaction.objects.filter(user=user, status=status_update).first()
+
+    if existing_reaction:
+        # Decrement the count for the previous reaction
+        if existing_reaction.reaction_type == "heart":
+            status_update.heart_count -= 1
+        elif existing_reaction.reaction_type == "laugh":
+            status_update.laugh_count -= 1
+        elif existing_reaction.reaction_type == "fire":
+            status_update.fire_count -= 1
+
+        # Delete the previous reaction
+        existing_reaction.delete()
+
+    # Create a new reaction if the user is reacting
+    # with the current reaction type
+    Reaction.objects.create(
+        user=user, status=status_update, reaction_type=reaction_type
+    )
+
+    # Update the reaction counts based on the new reaction
+    if reaction_type == "heart":
+        status_update.heart_count += 1
+    elif reaction_type == "laugh":
+        status_update.laugh_count += 1
+    elif reaction_type == "fire":
+        status_update.fire_count += 1
+
+    # Save the updated status update
+    status_update.save()
+
+    # Return a successful response with updated counts
+    return JsonResponse(
+        {
             "success": True,
-            "reaction": None if toggled_off else reaction_type,
-            "count": count
-        })
-
-    return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
+            "status_id": status_update.id,
+            "reaction_type": reaction_type,
+            "heart_count": status_update.heart_count,
+            "laugh_count": status_update.laugh_count,
+            "fire_count": status_update.fire_count,
+        }
+    )
