@@ -14,10 +14,6 @@ AGE_BAND_CHOICES = [
     ("36_and_over", "36 and over"),
 ]
 
-REACTION_CHOICES = [
-    ("like", "❤️"),
-]
-
 
 class Profile(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
@@ -91,10 +87,12 @@ class Reaction(models.Model):
     status = models.ForeignKey(
         StatusUpdate, on_delete=models.CASCADE, related_name="reactions"
     )
-    reaction_type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    is_liked = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} reacted {self.reaction_type} to {self.status}"
+        return (
+            f"{self.user.username} {'liked' if self.liked else 'unliked'} {self.status}"
+        )
 
 
 class NewsletterSignup(models.Model):

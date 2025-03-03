@@ -20,9 +20,7 @@ urlpatterns = [
     path("search_events", views.search_events, name="search_events"),
     path("delete-account", views_profile.delete_account, name="delete_account"),
     path(
-        "react/<int:status_id>/<str:reaction_type>/",
-        views_newsfeed.react_to_status,
-        name="react_to_status",
+        "react/<int:status_id>/", views_newsfeed.react_to_status, name="react_to_status"
     ),
     # all_auth urls
     path("accounts/login", CustomLoginView.as_view(), name="account_login"),

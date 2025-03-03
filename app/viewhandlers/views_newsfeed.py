@@ -38,47 +38,33 @@ def newsfeed(request):
 
 
 @login_required
-def react_to_status(request, status_id, reaction_type):
-    # Ensure that the reaction type is valid
-    valid_reactions = ["like"]
-    if reaction_type not in valid_reactions:
-        return JsonResponse(
-            {"success": False, "error": "Invalid reaction type"}, status=400
-        )
-
-    # Try to find the status update by the given id
+def react_to_status(request, status_id):
     try:
         status_update = StatusUpdate.objects.get(id=status_id)
     except StatusUpdate.DoesNotExist:
         return JsonResponse({"success": False, "error": "Status not found"}, status=404)
 
-    # Get the current user (who is reacting)
     user = request.user
 
-    # Check if the user has already reacted to the status with the same reaction
-    existing_reaction = Reaction.objects.filter(user=user, status=status_update).first()
+    # Check if a like already exists
+    reaction, created = Reaction.objects.get_or_create(user=user, status=status_update)
 
-    if existing_reaction and existing_reaction.reaction_type == "like":
-        status_update.like_count -= 1
+    if created:
+        reaction.is_liked = True  # First time liking
+        status_update.like_count += 1  # Increment like count
+    else:
+        reaction.is_liked = not reaction.is_liked  # Toggle like
+        status_update.like_count += 1 if reaction.is_liked else -1  # Adjust count
 
-    # Create a new reaction if the user is reacting for the first time
-    Reaction.objects.create(
-        user=user, status=status_update, reaction_type=reaction_type
-    )
-
-    # Update the reaction counts based on the new reaction
-    if reaction_type == "like":
-        status_update.like_count += 1
-
-    # Save the updated status update
+    # Save the objects
+    reaction.save()
     status_update.save()
 
     # Return a successful response with updated counts
     return JsonResponse(
         {
             "success": True,
-            "status_id": status_update.id,
-            "reaction_type": reaction_type,
+            "isLiked": reaction.is_liked,
             "like_count": status_update.like_count,
         }
     )

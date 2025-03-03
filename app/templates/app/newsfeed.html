@@ -87,43 +87,26 @@
   document.querySelectorAll(".react-button").forEach((button) => {
     button.addEventListener("click", function () {
       const statusId = this.getAttribute("data-status-id");
-      const reactionType = this.getAttribute("data-reaction");
-      react(statusId, reactionType, button);
+      toggleLike(statusId, button);
     });
   });
 
-  function react(statusId, reactionType, button) {
-    const requestData = {
-      status_id: statusId,
-      reaction_type: reactionType,
-    };
-
-    // Log the body before sending it to the server
-    console.log("Request body being sent:", JSON.stringify(requestData));
-
-
-    fetch(`react/${statusId}/${reactionType}/`, {
+  function toggleLike(statusId, button) {
+    fetch(`/react/${statusId}/`, {
         method: "POST",
         headers: {
           "X-CSRFToken": getCSRFToken(),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          status_id: statusId,
-          reaction_type: reactionType,
-        }),
       })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Received data:", data);
         if (data.success) {
-          // Find the count element for the corresponding reaction
           const countElement = button.querySelector('.count');
+          countElement.textContent = data.like_count;
 
-          // Update the count with the new value from the response
-          if (reactionType === "like") {
-            countElement.textContent = data.like_count;
-          }
+          // Toggle the heart color based on like status
+          button.querySelector(".emoji").textContent = data.isLiked ? "❤️" : "🤍";
         } else {
           console.error("Error:", data.error);
         }
