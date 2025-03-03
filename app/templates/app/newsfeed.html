@@ -69,19 +69,10 @@
 
           <!-- Reaction Buttons -->
           <div class="reaction-buttons">
-            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="heart">
+            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="like">
               <span class="emoji">❤️</span>
-              <span class="count">{{ status.heart_count }}</span>
+              <span class="count">{{ status.like_count }}</span>
             </button>
-            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="laugh">
-              <span class="emoji">😂</span>
-              <span class="count">{{ status.laugh_count }}</span>
-            </button>
-            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="fire">
-              <span class="emoji">🔥</span>
-              <span class="count">{{ status.fire_count }}</span>
-            </button>
-
           </div>
         </div>
         {% empty %}
@@ -130,12 +121,8 @@
           const countElement = button.querySelector('.count');
 
           // Update the count with the new value from the response
-          if (reactionType === "heart") {
-            countElement.textContent = data.heart_count;
-          } else if (reactionType === "laugh") {
-            countElement.textContent = data.laugh_count;
-          } else if (reactionType === "fire") {
-            countElement.textContent = data.fire_count;
+          if (reactionType === "like") {
+            countElement.textContent = data.like_count;
           }
         } else {
           console.error("Error:", data.error);

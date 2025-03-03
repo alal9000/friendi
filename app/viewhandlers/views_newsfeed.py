@@ -40,7 +40,7 @@ def newsfeed(request):
 @login_required
 def react_to_status(request, status_id, reaction_type):
     # Ensure that the reaction type is valid
-    valid_reactions = ["heart", "laugh", "fire"]
+    valid_reactions = ["like"]
     if reaction_type not in valid_reactions:
         return JsonResponse(
             {"success": False, "error": "Invalid reaction type"}, status=400
@@ -58,31 +58,17 @@ def react_to_status(request, status_id, reaction_type):
     # Check if the user has already reacted to the status with the same reaction
     existing_reaction = Reaction.objects.filter(user=user, status=status_update).first()
 
-    if existing_reaction:
-        # Decrement the count for the previous reaction
-        if existing_reaction.reaction_type == "heart":
-            status_update.heart_count -= 1
-        elif existing_reaction.reaction_type == "laugh":
-            status_update.laugh_count -= 1
-        elif existing_reaction.reaction_type == "fire":
-            status_update.fire_count -= 1
+    if existing_reaction and existing_reaction.reaction_type == "like":
+        status_update.like_count -= 1
 
-        # Delete the previous reaction
-        existing_reaction.delete()
-
-    # Create a new reaction if the user is reacting
-    # with the current reaction type
+    # Create a new reaction if the user is reacting for the first time
     Reaction.objects.create(
         user=user, status=status_update, reaction_type=reaction_type
     )
 
     # Update the reaction counts based on the new reaction
-    if reaction_type == "heart":
-        status_update.heart_count += 1
-    elif reaction_type == "laugh":
-        status_update.laugh_count += 1
-    elif reaction_type == "fire":
-        status_update.fire_count += 1
+    if reaction_type == "like":
+        status_update.like_count += 1
 
     # Save the updated status update
     status_update.save()
@@ -93,8 +79,6 @@ def react_to_status(request, status_id, reaction_type):
             "success": True,
             "status_id": status_update.id,
             "reaction_type": reaction_type,
-            "heart_count": status_update.heart_count,
-            "laugh_count": status_update.laugh_count,
-            "fire_count": status_update.fire_count,
+            "like_count": status_update.like_count,
         }
     )

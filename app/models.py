@@ -15,9 +15,7 @@ AGE_BAND_CHOICES = [
 ]
 
 REACTION_CHOICES = [
-    ("heart", "❤️"),
-    ("laugh", "😂"),
-    ("fire", "🔥"),
+    ("like", "❤️"),
 ]
 
 
@@ -82,9 +80,7 @@ class StatusUpdate(models.Model):
     content = models.TextField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
 
-    heart_count = models.PositiveIntegerField(default=0)
-    laugh_count = models.PositiveIntegerField(default=0)
-    fire_count = models.PositiveIntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-date_posted"]
@@ -98,7 +94,7 @@ class Reaction(models.Model):
     reaction_type = models.CharField(max_length=10, choices=REACTION_CHOICES)
 
     def __str__(self):
-        return f"{self.user.username} reacted {self.get_reaction_type_display()} to {self.status}"
+        return f"{self.user.username} reacted {self.reaction_type} to {self.status}"
 
 
 class NewsletterSignup(models.Model):
