@@ -6,6 +6,15 @@
     overflow-y: auto;
   }
 
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* status-update styles */
+
   .status-update {
     border: 1px solid #ddd;
     padding: 10px;
@@ -19,13 +28,6 @@
     color: #666;
   }
 
-  .avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
   .status-content {
     display: flex;
     align-items: center;
@@ -35,7 +37,7 @@
     margin-left: 10px;
   }
 
-  .react-button {
+  .like-button {
     border: none;
   }
 </style>
@@ -67,13 +69,17 @@
           </div>
           <p class="status-meta">Posted on {{ status.date_posted }}</p>
 
-          <!-- Reaction Buttons -->
-          <div class="reaction-buttons">
-            <button class="react-button" data-status-id="{{ status.id }}" data-reaction="like">
-              <span class="emoji">❤️</span>
-              <span class="count">{{ status.like_count }}</span>
-            </button>
-          </div>
+          <!-- Like Button -->
+          <button class="like-button" data-status-id="{{ status.id }}">
+            <span class="emoji">
+              {% if user in status.liked_by.all %} ❤️ {% else %} 🤍 {% endif %}
+            </span>
+            <span class="count">{{ status.like_count }}</span>
+          </button>
+          <span class="like-text" {% if user not in status.liked_by.all %} style="display: none;" {% endif %}>
+            <em>You like this</em>
+          </span>
+
         </div>
         {% empty %}
         <p>No status updates available.</p>
@@ -84,11 +90,15 @@
 </section>
 
 <script>
-  document.querySelectorAll(".react-button").forEach((button) => {
-    button.addEventListener("click", function () {
-      const statusId = this.getAttribute("data-status-id");
-      toggleLike(statusId, button);
-    });
+  document.addEventListener("DOMContentLoaded", function () {
+    const button = document.querySelector(".like-button");
+
+    if (button) {
+      button.addEventListener("click", function () {
+        const statusId = this.getAttribute("data-status-id");
+        toggleLike(statusId, button);
+      });
+    }
   });
 
   function toggleLike(statusId, button) {
@@ -107,6 +117,9 @@
 
           // Toggle the heart color based on like status
           button.querySelector(".emoji").textContent = data.isLiked ? "❤️" : "🤍";
+
+          const likeText = button.nextElementSibling; // Assuming like-text is right after button
+          likeText.style.display = data.isLiked ? "inline" : "none";
         } else {
           console.error("Error:", data.error);
         }

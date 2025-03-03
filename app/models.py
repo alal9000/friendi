@@ -3,9 +3,6 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image, ImageOps
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-from django.db.models import F
 
 AGE_BAND_CHOICES = [
     ("rather_not_say", "Rather not say"),
@@ -76,23 +73,14 @@ class StatusUpdate(models.Model):
     content = models.TextField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
 
-    like_count = models.PositiveIntegerField(default=0)
+    liked_by = models.ManyToManyField(User, related_name="liked_statuses", blank=True)
 
     class Meta:
         ordering = ["-date_posted"]
 
-
-class Reaction(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    status = models.ForeignKey(
-        StatusUpdate, on_delete=models.CASCADE, related_name="reactions"
-    )
-    is_liked = models.BooleanField(default=False)
-
-    def __str__(self):
-        return (
-            f"{self.user.username} {'liked' if self.liked else 'unliked'} {self.status}"
-        )
+    @property
+    def like_count(self):
+        return self.liked_by.count()
 
 
 class NewsletterSignup(models.Model):

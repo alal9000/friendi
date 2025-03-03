@@ -2,7 +2,7 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
-from app.models import Reaction, StatusUpdate
+from app.models import StatusUpdate
 from friends.models import Friend
 from django.db.models import F
 
@@ -46,25 +46,17 @@ def react_to_status(request, status_id):
 
     user = request.user
 
-    # Check if a like already exists
-    reaction, created = Reaction.objects.get_or_create(user=user, status=status_update)
-
-    if created:
-        reaction.is_liked = True  # First time liking
-        status_update.like_count += 1  # Increment like count
+    if user in status_update.liked_by.all():
+        status_update.liked_by.remove(user)  # Unlike
+        is_liked = False
     else:
-        reaction.is_liked = not reaction.is_liked  # Toggle like
-        status_update.like_count += 1 if reaction.is_liked else -1  # Adjust count
+        status_update.liked_by.add(user)  # Like
+        is_liked = True
 
-    # Save the objects
-    reaction.save()
-    status_update.save()
-
-    # Return a successful response with updated counts
     return JsonResponse(
         {
             "success": True,
-            "isLiked": reaction.is_liked,
+            "isLiked": is_liked,
             "like_count": status_update.like_count,
         }
     )
