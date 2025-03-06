@@ -55,7 +55,7 @@ def profile(request, profile_id):
     ):
         is_friend = True
 
-    user_photos = Photo.objects.filter(profile=profile).order_by("-timestamp")[:6]
+    user_photos = Photo.objects.filter(profile=profile).order_by("-timestamp")[:2]
     user_instance = profile.user
     friend_visibility = profile.friend_visibility
 

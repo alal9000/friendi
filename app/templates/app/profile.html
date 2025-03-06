@@ -194,35 +194,8 @@
 
 				</div>
 				<!-- end update status form -->
-				<div class="card card-body mb-2">
-					<div>
-						<a class="mb-3 d-inline-block text-decoration-none" href="{% url 'friends' profile.id %}">
-							<h1>Friends {% if friends.count > 0 and friend_visibility %} ({{ friends.count }}) {% endif %}</h1>
-						</a>
-						<ul class="list-unstyled">
-							{% if friends %}
-							{% for friend in friends %}
-							<li class="mb-2">
-								<a href="{% url 'profile' friend.id %}" class="text-decoration-none">
-									{% if friend.profile_pic %}
-									<img class="avatar" src="{{ friend.profile_pic.url }}" alt="Avatar">
-									{% else %}
-									<img class="avatar" src="{% static 'images/default_profile_pic.png' %}" alt="Avatar">
-									{% endif %}
-									{{ friend.user.first_name }}
-								</a>
-							</li>
-							<hr class="style-one">
-							{% endfor %}
-							{% else %}
-							<p><em>No friends showing</em></p>
-							{% endif %}
-						</ul>
-						{% if request.user.profile == profile %}
-						<a href="{% url 'friend_requests' profile.id %}" class="btn btn-primary w-100">Friend Requests</a>
-						{% endif %}
-					</div>
-				</div>
+
+				<!-- Events section -->
 
 				<div class="card card-body mb-2">
 					<div>
@@ -263,28 +236,68 @@
 					</div>
 				</div>
 
+
+
 			</div>
 
 			<!-- column 3 -->
 
 			<div class="col-md">
+
+				<!-- Friends section -->
+
 				<div class="card card-body mb-2">
 					<div>
-						<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
-								Photo Gallery</a></h1>
-						{% if user_photos %}
-						{% for photo in user_photos %}
-						<a href="{% url 'gallery' profile.id %}"><img src="{{photo.image.url}}" alt=""
-								class="profile-albums mb-2"></a>
-						{% endfor %}
-						{% else %}
-						<p><em>User has not yet uploaded any photos</em></p>
+						<a class="mb-3 d-inline-block text-decoration-none" href="{% url 'friends' profile.id %}">
+							<h1>Friends {% if friends.count > 0 and friend_visibility %} ({{ friends.count }}) {% endif %}</h1>
+						</a>
+						<ul class="list-unstyled">
+							{% if friends %}
+							{% for friend in friends %}
+							<li class="mb-2">
+								<a href="{% url 'profile' friend.id %}" class="text-decoration-none">
+									{% if friend.profile_pic %}
+									<img class="avatar" src="{{ friend.profile_pic.url }}" alt="Avatar">
+									{% else %}
+									<img class="avatar" src="{% static 'images/default_profile_pic.png' %}" alt="Avatar">
+									{% endif %}
+									{{ friend.user.first_name }}
+								</a>
+							</li>
+							<hr class="style-one">
+							{% endfor %}
+							{% else %}
+							<p><em>No friends showing</em></p>
+							{% endif %}
+						</ul>
+						{% if request.user.profile == profile %}
+						<a href="{% url 'friend_requests' profile.id %}" class="btn btn-primary w-100">Friend Requests</a>
 						{% endif %}
 					</div>
 				</div>
 
+				<!-- end friends section -->
+
+				<!-- profile gallery section -->
+
+				{% if user_photos %}
+				<div class="card card-body mb-2">
+					<div>
+						<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
+								Photo Gallery</a></h1>
+
+						{% for photo in user_photos %}
+						<a href="{% url 'gallery' profile.id %}"><img src="{{photo.image.url}}" alt=""
+								class="profile-albums mb-2"></a>
+						{% endfor %}
+					</div>
+				</div>
+				{% endif %}
+
+				<!-- end profile gallery section -->
+
+				<!-- Invite Friend section -->
 				{% if request.user.profile == profile %}
-				<!-- Invite Friend Form -->
 				<div class="card card-body">
 					<h3>Invite a Friend To Friendi</h3>
 					<form method="post" action="">

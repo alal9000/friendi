@@ -9,8 +9,8 @@ class Photo(models.Model):
     description = models.TextField()
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
     status = models.ForeignKey(
-        StatusUpdate, on_delete=models.CASCADE, null=True, blank=True
-    )  # New relationship
+        StatusUpdate, on_delete=models.SET_NULL, null=True, blank=True
+    )
     timestamp = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):

@@ -39,40 +39,6 @@
   <h1 class="mb-4">{{ profile.user.first_name }}'s Photo Gallery</h1>
   <div class="row">
 
-    <!-- album column -->
-    <div class="col-md-3 mb-3">
-      <div class="card">
-        <div class="card-header">Albums:</div>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item"><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">All</a></li>
-
-          {% for album in albums %}
-          <li class="list-group-item d-flex justify-content-between">
-            <a href="{% url 'gallery' profile.id %}?album={{album.name}}"
-              class="text-decoration-none">{{ album.name }}</a>
-
-            {% if request.user.profile == profile %}
-            <!-- delete album form -->
-            <form method="POST" action="" id="delete-album-form-{{ album.id }}">
-              {% csrf_token %}
-              <input type="hidden" name="album_id" value="{{album.id}}">
-              <button type="button" class="bi bi-trash delete-btn" data-bs-toggle="modal"
-                data-bs-target="#confirmDeleteModal"></button>
-            </form>
-            <!-- end form -->
-            {% endif %}
-          </li>
-          {% endfor %}
-
-          {% if request.user.profile.id == profile.id %}
-          <a href="{% url 'add_photo' profile.id %}" class="btn btn-primary btn-block btn-sm m-1">Add Photo</a>
-          <a href="{% url 'add_album' profile.id %}" class="btn btn-warning btn-block btn-sm m-1">Add Album</a>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-    <!-- end album column -->
-
     <!-- photo column -->
     <div class="col-md-9 mb-3">
       <div class="row">
