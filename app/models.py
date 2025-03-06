@@ -72,7 +72,7 @@ class StatusUpdate(models.Model):
     )
     content = models.TextField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
-
+    image = models.ImageField(upload_to="status_images/", blank=True, null=True)
     liked_by = models.ManyToManyField(User, related_name="liked_statuses", blank=True)
 
     class Meta:

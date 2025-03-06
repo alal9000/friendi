@@ -23,6 +23,7 @@ from app.forms import (
     InviteFriendForm,
 )
 
+
 def profile(request, profile_id):
     profile = get_object_or_404(Profile, id=profile_id)
     current_user_profile = None
@@ -125,7 +126,9 @@ def profile(request, profile_id):
     invite_friend_form = InviteFriendForm()
 
     # Retrieve the latest status update for the current profile
-    latest_status_update = StatusUpdate.objects.filter(profile=current_user_profile).first()
+    latest_status_update = StatusUpdate.objects.filter(
+        profile=current_user_profile
+    ).first()
 
     # handle form submissions
     if request.method == "POST":
@@ -139,16 +142,20 @@ def profile(request, profile_id):
                 return redirect("profile", profile_id=profile_id)
         # end profile pic form
 
-        # status update form
+        # Status update form
         if "status-update" in request.POST:
-            status_form = StatusUpdateForm(request.POST)
+            status_form = StatusUpdateForm(request.POST, request.FILES)
             if status_form.is_valid():
-                status_update = status_form.save(commit=False)  # Don't save to DB yet
-                status_update.profile = current_user_profile  # Assign the profile manually
+                status_update = status_form.save(commit=False)
+                status_update.profile = current_user_profile
+
+                # Save image if uploaded
+                if "status_image" in request.FILES:
+                    status_update.image = request.FILES["status_image"]
+
                 status_update.save()  # Now save to DB
                 messages.success(request, "Status update posted successfully.")
                 return redirect("profile", profile_id=profile_id)
-        # end status update form
 
         # Clear status form
         if "clear-status" in request.POST:
@@ -233,7 +240,7 @@ def profile(request, profile_id):
         "button": button,
         "description_form": description_form,
         "success_message": success_message,
-        "latest_status_update": latest_status_update
+        "latest_status_update": latest_status_update,
     }
 
     return render(request, "app/profile.html", context)
@@ -278,25 +285,21 @@ def delete_account(request):
 
     # Check if the profile is hosting any future, non-cancelled events
     upcoming_events_host = Event.objects.filter(
-    host=profile, 
-    event_date__gte=timezone.now(), 
-    cancelled=False
+        host=profile, event_date__gte=timezone.now(), cancelled=False
     )
     # Check if the profile is attending any future, non-cancelled events
     upcoming_events_attendee = Event.objects.filter(
-    guests=profile, 
-    event_date__gte=timezone.now(), 
-    cancelled=False
+        guests=profile, event_date__gte=timezone.now(), cancelled=False
     )
-    
+
     # If the user is part of any future event, display a message and prevent deletion
     if upcoming_events_host.exists() or upcoming_events_attendee.exists():
         messages.error(
             request,
             "You are currently part of an upcoming event as a host or attendee. "
-            "Please remove yourself from the event(s) before deleting your account."
+            "Please remove yourself from the event(s) before deleting your account.",
         )
-        return redirect('home')
+        return redirect("home")
 
     # If no events are found, proceed with deletion
     if request.method == "POST":

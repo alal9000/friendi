@@ -22,7 +22,6 @@ from .models import Profile, StatusUpdate, User
 from events.models import Event
 
 
-
 # create event
 class EventForm(ModelForm):
     class Meta:
@@ -61,21 +60,21 @@ class ProfileForm(ModelForm):
 # status update form
 class StatusUpdateForm(forms.ModelForm):
     class Meta:
-        model = StatusUpdate  
-        fields = ['content']  
+        model = StatusUpdate
+        fields = ["content", "image"]
         widgets = {
-            'content': forms.Textarea(
+            "content": forms.Textarea(
                 attrs={
-                    'class': 'form-control',
-                    'placeholder': "What's on your mind?",
-                    'rows': 3,
+                    "class": "form-control",
+                    "placeholder": "What's on your mind?",
+                    "rows": 3,
                 }
             ),
+            "image": forms.ClearableFileInput(
+                attrs={"class": "form-control", "name": "status_image"}
+            ),
         }
-        labels = {
-            'content': '', 
-        }
-
+        labels = {"content": "", "image": "Upload an image"}
 
 
 # update user info
@@ -153,13 +152,13 @@ class CustomSignupForm(SignupForm):
         return user
 
 
-
 class CustomLoginForm(LoginForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields.pop("username", None)
         self.fields["login"].widget.attrs.update({"class": "form-control mb-2"})
         self.fields["password"].widget.attrs.update({"class": "form-control"})
+
 
 class CustomResetPasswordForm(ResetPasswordForm):
     def __init__(self, *args, **kwargs):

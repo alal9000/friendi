@@ -37,6 +37,14 @@
     margin-left: 10px;
   }
 
+  .status-image img {
+    max-width: 200px;
+    height: auto;
+    display: block;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
   .like-button {
     border: none;
   }
@@ -66,8 +74,14 @@
               <strong>{{ status.profile.user.username }}</strong>:
               {{status.content }}
             </p>
+
           </div>
-          <p class="status-meta">Posted on {{ status.date_posted }}</p>
+          {% if status.image %}
+          <div class="status-image">
+            <img src="{{ status.image.url }}" alt="Status Image" onclick="showImage('{{ status.image.url }}')">
+          </div>
+          {% endif %}
+          <p class=" status-meta">Posted on {{ status.date_posted }}</p>
 
           <!-- Like Button -->
           <button class="like-button" data-status-id="{{ status.id }}">
@@ -88,6 +102,21 @@
     </div>
   </div>
 </section>
+
+<!-- Modal HTML -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImage" src="" alt="Status Image" class="img-fluid">
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -129,6 +158,17 @@
 
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+  // image modal
+
+  function showImage(imageUrl) {
+    // Set the modal image source to the clicked image's URL
+    document.getElementById('modalImage').src = imageUrl;
+
+    // Show the modal
+    var myModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    myModal.show();
   }
 </script>
 

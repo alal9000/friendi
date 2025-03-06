@@ -1,10 +1,10 @@
-import json
+from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
+from app.forms import StatusUpdateForm
 from app.models import StatusUpdate
 from friends.models import Friend
-from django.db.models import F
 
 
 def newsfeed(request):
@@ -33,6 +33,19 @@ def newsfeed(request):
     status_updates = StatusUpdate.objects.filter(
         profile__id__in=profiles_to_include
     ).order_by("-date_posted")
+
+    # Handle image uploads
+    if request.method == "POST":
+        form = StatusUpdateForm(request.POST, request.FILES)
+        if form.is_valid():
+            status_update = form.save(commit=False)
+            status_update.profile = current_user_profile
+            status_update.save()
+            messages.success(request, "Status updated successfully!")
+            return redirect("newsfeed")
+
+    else:
+        form = StatusUpdateForm()
 
     return render(request, "app/newsfeed.html", {"status_updates": status_updates})
 
