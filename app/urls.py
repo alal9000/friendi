@@ -7,7 +7,6 @@ from .views import CustomSignupView, CustomLoginView
 
 urlpatterns = [
     path("", views.home, name="home"),
-    path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
     path("about", views.about, name="about"),
     path("newsletter/signup", views.newsletter_signup, name="newsletter_signup"),
     path("thank-you", views.thank_you, name="thank-you"),
@@ -19,8 +18,15 @@ urlpatterns = [
     path("terms-of-service", views.tos, name="tos"),
     path("search_events", views.search_events, name="search_events"),
     path("delete-account", views_profile.delete_account, name="delete_account"),
+    # newsfeed urls
+    path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
     path(
         "react/<int:status_id>/", views_newsfeed.react_to_status, name="react_to_status"
+    ),
+    path(
+        "post_comment/<int:status_id>/",
+        views_newsfeed.post_comment,
+        name="post_comment",
     ),
     # all_auth urls
     path("accounts/login", CustomLoginView.as_view(), name="account_login"),

@@ -21,7 +21,7 @@ class Event(models.Model):
         return self.event_title
 
 
-class Comment(models.Model):
+class EventComment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     comment = models.TextField()

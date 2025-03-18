@@ -60,7 +60,7 @@
       <div class="col viewport-height">
         <h1>Newsfeed</h1>
 
-        <!-- Loop through status updates -->
+        <!-- status block -->
         {% for status in status_updates %}
         <div class="status-update">
           <div class="status-content">
@@ -94,10 +94,35 @@
             <em>You like this</em>
           </span>
 
+          <!-- Existing comments -->
+          <div class="comments">
+            {% for comment in status.comments.all %}
+            <div class="comment">
+              <strong>
+                <a href="{% url 'profile' comment.author.id %}">
+                  {{ comment.author.first_name }} {{ comment.author.last_name }}:
+                </a>
+              </strong>
+              {{ comment.content }}
+              <span class="comment-meta">{{ comment.created_at }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Add a new comment -->
+          <form class="comment-form" data-status-id="{{ status.id }}">
+            {% csrf_token %}
+            <input type="text" class="form-control" placeholder="Write a comment..." />
+            <button type="submit">Comment</button>
+          </form>
+
+
         </div>
         {% empty %}
         <p>No status updates available.</p>
         {% endfor %}
+
+        <!-- end status block -->
       </div>
     </div>
   </div>
@@ -119,15 +144,16 @@
 
 
 <script>
+  // like functionality
   document.addEventListener("DOMContentLoaded", function () {
-    const button = document.querySelector(".like-button");
+    const buttons = document.querySelectorAll(".like-button");
 
-    if (button) {
+    buttons.forEach((button) => {
       button.addEventListener("click", function () {
         const statusId = this.getAttribute("data-status-id");
         toggleLike(statusId, button);
       });
-    }
+    });
   });
 
   function toggleLike(statusId, button) {
@@ -160,8 +186,57 @@
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
 
-  // image modal
+  // comment functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.comment-form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
 
+        const statusId = form.getAttribute('data-status-id');
+        const content = form.querySelector('input[type="text"]').value;
+
+
+        if (content.trim() === '') return;
+
+        console.log('Request body:', JSON.stringify({
+          content
+        }));
+
+        fetch(`/post_comment/${statusId}/`, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': getCSRFToken(),
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content
+            }),
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              const commentsContainer = form.previousElementSibling;
+              const newComment = `
+              <div class="comment">
+                <strong>
+                  <a href="/profile/${statusId}/">
+                    ${data.author}:
+                  </a>
+                </strong>
+                ${data.content}
+                <span class="comment-meta">${data.created_at}</span>
+              </div>`;
+
+              commentsContainer.innerHTML += newComment;
+              form.querySelector('input[type="text"]').value = '';
+            }
+          })
+          .catch(err => console.error(err));
+      });
+    });
+  });
+
+  // image modal
   function showImage(imageUrl) {
     // Set the modal image source to the clicked image's URL
     document.getElementById('modalImage').src = imageUrl;

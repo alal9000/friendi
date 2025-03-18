@@ -18,7 +18,7 @@ from allauth.account.forms import (
     ResetPasswordKeyForm,
 )
 
-from .models import Profile, StatusUpdate, User
+from .models import Profile, StatusUpdate, User, StatusComment
 from events.models import Event
 
 
@@ -75,6 +75,13 @@ class StatusUpdateForm(forms.ModelForm):
             ),
         }
         labels = {"content": "", "image": "Upload an image"}
+
+
+# status comment form
+class StatusCommentForm(forms.ModelForm):
+    class Meta:
+        model = StatusComment
+        fields = ["content"]
 
 
 # update user info

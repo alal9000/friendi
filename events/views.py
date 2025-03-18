@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from app.models import Profile
-from .models import Event, Comment, EventRequest
+from .models import Event, EventComment, EventRequest
 from app.decorators import check_profile_id
 from app.forms import EventForm
 from notifications.models import Notification
@@ -82,7 +82,7 @@ def event(request, event_id):
         # comment
         if is_guest or is_host:
             comment_text = request.POST.get("comment_text")
-            Comment.objects.create(
+            EventComment.objects.create(
                 profile=request_profile, event=event, comment=comment_text
             )
 
@@ -124,7 +124,7 @@ def event(request, event_id):
 
             return redirect("event", event_id=event_id)
 
-    comments = Comment.objects.filter(event=event)
+    comments = EventComment.objects.filter(event=event)
 
     context = {
         "event": event,

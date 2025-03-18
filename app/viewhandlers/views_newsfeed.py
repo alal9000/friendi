@@ -1,8 +1,9 @@
+import json
 from django.contrib import messages
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from app.forms import StatusUpdateForm
+from app.forms import StatusUpdateForm, StatusCommentForm
 from app.models import StatusUpdate
 from friends.models import Friend
 
@@ -73,3 +74,31 @@ def react_to_status(request, status_id):
             "like_count": status_update.like_count,
         }
     )
+
+
+@login_required
+def post_comment(request, status_id):
+    if request.method == "POST":
+        status = get_object_or_404(StatusUpdate, id=status_id)
+        try:
+            data = json.loads(request.body)
+            form = StatusCommentForm(data)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.status = status
+                comment.author = request.user
+                comment.save()
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "author": f"{request.user.first_name} {request.user.last_name}",
+                        "content": comment.content,
+                        "created_at": comment.created_at.strftime("%b %d, %Y %I:%M %p"),
+                    }
+                )
+            else:
+                return JsonResponse(
+                    {"success": False, "error": form.errors}, status=400
+                )
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
