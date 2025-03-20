@@ -48,6 +48,27 @@
   .like-button {
     border: none;
   }
+
+  /* comment styles */
+  .comment-meta {
+    font-size: 0.9em;
+    color: #666;
+  }
+
+  .comments {
+    background-color: #f2f2f2;
+    border-radius: 5px;
+  }
+
+  .comment {
+    padding: 10px;
+  }
+
+  .comments hr {
+    border: 0;
+    border-top: 1px solid #b5b4b4;
+    margin: 5px 0;
+  }
 </style>
 
 <!-- CSRF token -->
@@ -94,28 +115,37 @@
             <em>You like this</em>
           </span>
 
-          <!-- Existing comments -->
-          <div class="comments">
-            {% for comment in status.comments.all %}
-            <div class="comment">
-              <strong>
-                <a href="{% url 'profile' comment.author.id %}">
-                  {{ comment.author.first_name }} {{ comment.author.last_name }}:
-                </a>
-              </strong>
-              {{ comment.content }}
-              <span class="comment-meta">{{ comment.created_at }}</span>
+          <!-- comment section -->
+          <div class="comment-section">
+            <!-- Add a new comment -->
+            <form action="{% url 'post_detail' status_id=status.id %}" method="get">
+              <button type="submit">Reply</button>
+            </form>
+
+            <!-- Existing comments -->
+            <div class="comments">
+              {% for comment in status.comments.all|slice:":2" reversed %}
+              <hr>
+              <div class="comment">
+                <strong>
+                  <a href="{% url 'profile' comment.author.id %}">
+                    {{ comment.author.first_name }} {{ comment.author.last_name }}:
+                  </a>
+                </strong>
+                {{ comment.content }}
+                <span class="comment-meta">{{ comment.created_at }}</span>
+
+                <!-- Reply button -->
+                <button>Reply</button>
+              </div>
+              {% endfor %}
+
+              {% if status.comments.count > 2 %}
+              <a href="#">See all comments</a>
+              {% endif %}
             </div>
-            {% endfor %}
           </div>
-
-          <!-- Add a new comment -->
-          <form class="comment-form" data-status-id="{{ status.id }}">
-            {% csrf_token %}
-            <input type="text" class="form-control" placeholder="Write a comment..." />
-            <button type="submit">Comment</button>
-          </form>
-
+          <!-- end comment section -->
 
         </div>
         {% empty %}
@@ -215,7 +245,7 @@
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              const commentsContainer = form.previousElementSibling;
+              const commentsContainer = form.nextElementSibling;
               const newComment = `
               <div class="comment">
                 <strong>
@@ -227,7 +257,7 @@
                 <span class="comment-meta">${data.created_at}</span>
               </div>`;
 
-              commentsContainer.innerHTML += newComment;
+              commentsContainer.insertAdjacentHTML('afterbegin', newComment);
               form.querySelector('input[type="text"]').value = '';
             }
           })

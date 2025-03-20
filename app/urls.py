@@ -1,7 +1,6 @@
 from django.urls import path
 
-from app.viewhandlers import views_newsfeed
-from app.viewhandlers import views_profile
+from app.viewhandlers import views_newsfeed, views_profile, views_post_detail
 from . import views
 from .views import CustomSignupView, CustomLoginView
 
@@ -20,6 +19,7 @@ urlpatterns = [
     path("delete-account", views_profile.delete_account, name="delete_account"),
     # newsfeed urls
     path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
+    path("post/<int:status_id>", views_post_detail.post_detail, name="post_detail"),
     path(
         "react/<int:status_id>/", views_newsfeed.react_to_status, name="react_to_status"
     ),

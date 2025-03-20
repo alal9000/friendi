@@ -31,9 +31,11 @@ def newsfeed(request):
     profiles_to_include = sender_friends + receiver_friends + [current_user_profile.id]
 
     # Get status updates from both the user and their friends
-    status_updates = StatusUpdate.objects.filter(
-        profile__id__in=profiles_to_include
-    ).order_by("-date_posted")
+    status_updates = (
+        StatusUpdate.objects.filter(profile__id__in=profiles_to_include)
+        .prefetch_related("comments")
+        .order_by("-date_posted")
+    )
 
     # Handle image uploads
     if request.method == "POST":
