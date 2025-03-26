@@ -117,8 +117,9 @@
 
           <!-- comment section -->
           <div class="comment-section">
-            <!-- Add a new comment -->
+            <!-- Reply button for original post -->
             <form action="{% url 'post_detail' status_id=status.id %}" method="get">
+              <input type="hidden" name="focus" value="post">
               <button type="submit">Reply</button>
             </form>
 
@@ -135,8 +136,10 @@
                 {{ comment.content }}
                 <span class="comment-meta">{{ comment.created_at }}</span>
 
-                <!-- Reply button -->
-                <button>Reply</button>
+                <!-- Reply button for post comments -->
+                <a href="{% url 'post_detail' status_id=status.id %}?comment_id={{ comment.id }}">
+                  Reply
+                </a>
               </div>
               {% endfor %}
 
@@ -215,56 +218,6 @@
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
-
-  // comment functionality
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.comment-form').forEach(form => {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const statusId = form.getAttribute('data-status-id');
-        const content = form.querySelector('input[type="text"]').value;
-
-
-        if (content.trim() === '') return;
-
-        console.log('Request body:', JSON.stringify({
-          content
-        }));
-
-        fetch(`/post_comment/${statusId}/`, {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': getCSRFToken(),
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content
-            }),
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              const commentsContainer = form.nextElementSibling;
-              const newComment = `
-              <div class="comment">
-                <strong>
-                  <a href="/profile/${statusId}/">
-                    ${data.author}:
-                  </a>
-                </strong>
-                ${data.content}
-                <span class="comment-meta">${data.created_at}</span>
-              </div>`;
-
-              commentsContainer.insertAdjacentHTML('afterbegin', newComment);
-              form.querySelector('input[type="text"]').value = '';
-            }
-          })
-          .catch(err => console.error(err));
-      });
-    });
-  });
 
   // image modal
   function showImage(imageUrl) {

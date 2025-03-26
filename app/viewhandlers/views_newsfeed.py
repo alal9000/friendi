@@ -95,7 +95,8 @@ def post_comment(request, status_id):
                         "success": True,
                         "author": f"{request.user.first_name} {request.user.last_name}",
                         "content": comment.content,
-                        "created_at": comment.created_at.strftime("%b %d, %Y %I:%M %p"),
+                        "created_at": comment.created_at.strftime("%B %d, %Y %I:%M %p"),
+                        "comment_id": comment.id,
                     }
                 )
             else:

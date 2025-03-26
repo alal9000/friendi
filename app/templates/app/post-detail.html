@@ -1,12 +1,61 @@
-{% extends "app/main.html" %}
-{% load static %}
+{% extends "app/main.html" %} {% load static %} {% block content %}
+<style>
+  .viewport-height {
+    min-height: 70vh;
+    overflow-y: auto;
+  }
 
-{% block content %}
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* status-update styles */
+
+  .status-update {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+
+  .status-meta {
+    font-size: 0.9em;
+    color: #666;
+  }
+
+  .status-content {
+    display: flex;
+    align-items: center;
+  }
+
+  .status-text {
+    margin-left: 10px;
+  }
+
+  .status-image img {
+    max-width: 200px;
+    height: auto;
+    display: block;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
+  .like-button {
+    border: none;
+  }
+</style>
+
+<!-- CSRF token -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+
 <div class="container">
   <div class="row">
     <div class="col">
       <h1>Post Detail</h1>
-
       <div class="status-update">
         <div class="status-content">
           {% if status.profile.profile_pic %}
@@ -20,6 +69,7 @@
             {{ status.content }}
           </p>
         </div>
+
 
         {% if status.image %}
         <div class="status-image">
@@ -39,11 +89,21 @@
         <span class="like-text" {% if user not in status.liked_by.all %} style="display: none;" {% endif %}>
           <em>You like this</em>
         </span>
+        <!-- End Like Button -->
 
         <!-- Comments Section -->
+        <!-- Add a new comment -->
+        <form action="{% url 'post_comment' status.id %}" data-status-id="{{ status.id }}" class="comment-form">
+          {% csrf_token %}
+          <input type="text" class="form-control" placeholder="Write a comment..." />
+          <button type="submit">Post Reply</button>
+        </form>
+        <!-- End Add a new comment -->
+
+        <!-- Existing comments -->
         <div class="comments">
-          {% for comment in status.comments.all %}
-          <div class="comment">
+          {% for comment in status.comments.all reversed %}
+          <div id="comment-{{ comment.id }}" class="comment">
             <strong>
               <a href="{% url 'profile' comment.author.id %}">
                 {{ comment.author.first_name }} {{ comment.author.last_name }}:
@@ -51,10 +111,29 @@
             </strong>
             {{ comment.content }}
             <span class="comment-meta">{{ comment.created_at }}</span>
+
+            <!-- Reply Link (initially visible) -->
+            <a href="javascript:void(0);" class="reply-link" data-comment-id="{{ comment.id }}"
+              style="color: blue; text-decoration: underline;">Reply</a>
+            <!-- End Reply Link -->
+
+            <!-- Reply Form (initially hidden) -->
+            <form data-comment-id="{{ comment.id }}" class="reply-form" style="display: none; margin-top: 10px;">
+              {% csrf_token %}
+              <input type="text" class="form-control" id="replyInput-{{ comment.id }}" placeholder="Write a reply...">
+              <button type="button" class="cancel-reply">Cancel</button>
+              <button type="submit">Post Reply</button>
+            </form>
+            <!-- End Reply Form -->
+
+
           </div>
           <hr>
           {% endfor %}
         </div>
+        <!-- End Existing comments -->
+        <!-- End Comments Section -->
+
       </div>
     </div>
   </div>
@@ -75,6 +154,175 @@
 </div>
 
 <script>
+  import {
+    handleCommentSubmission
+  } from './commentHandler.js';
+
+  document.addEventListener("DOMContentLoaded", () => {
+
+    // comment functionality
+    const form = document.querySelector('.comment-form');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const statusId = form.getAttribute('data-status-id');
+      const content = form.querySelector('input[type="text"]').value;
+
+
+      if (content.trim() === '') return;
+
+      console.log('Request body:', JSON.stringify({
+        content
+      }));
+
+      fetch(`/post_comment/${statusId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content
+          }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const commentsContainer = form.nextElementSibling;
+            const newComment = `
+            <div class="comment" id="comment-${data.comment_id}">
+              <strong>
+                <a href="/profile/${statusId}/">
+                  ${data.author}:
+                </a>
+              </strong>
+              ${data.content}
+              <span class="comment-meta">${data.created_at}</span>
+
+              <!-- Reply Link (initially visible) -->
+              <a href="javascript:void(0);" class="reply-link" data-comment-id="${data.comment_id}"
+                style="color: blue; text-decoration: underline;">Reply</a>
+
+              <!-- Reply Form (initially hidden) -->
+              <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
+                {% csrf_token %}
+                <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
+                <button type="button" class="cancel-reply">Cancel</button>
+                <button type="submit">Post Reply</button>
+              </form>
+              <!-- End Reply Form -->
+            </div>
+            <hr>
+          `;
+
+            commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+            form.querySelector('input[type="text"]').value = '';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("There was an error posting your comment. Please try again.");
+        })
+
+    });
+
+    // Handle scroll to post and comment
+    const params = new URLSearchParams(window.location.search);
+    const commentId = params.get("comment_id");
+    const focus = params.get("focus");
+
+    // scroll to comment
+    if (commentId) {
+      expandCommentForm(commentId);
+      const targetComment = document.getElementById(`comment-${commentId}`);
+      if (targetComment) {
+        targetComment.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+        targetComment.style.backgroundColor = "#ffffcc"; // Highlight effect
+        setTimeout(() => targetComment.style.backgroundColor = "", 2000); // Remove highlight after 2s
+      }
+    }
+
+    // scroll to post and input focus
+    if (focus === "post") {
+      const commentInput = document.querySelector('form[data-status-id="{{ status.id }}"] input[type="text"]');
+      if (commentInput) {
+        commentInput.focus(); // Focus on the input
+        commentInput.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }
+
+    // Function to expand the comment form based on the 'comment_id'
+    function expandCommentForm(commentId) {
+      // Find the form with the matching 'data-comment-id' attribute
+      const commentForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
+      if (commentForm) {
+        // Expand the form (change the display property to show it)
+        commentForm.style.display = 'block'; // For example, change display to 'block'
+      }
+    }
+
+    // Handle Cancel Button Click
+    const cancelButtons = document.querySelectorAll('.cancel-reply');
+    cancelButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        const form = event.target.closest('form'); // Find the parent form
+        const input = form.querySelector('input'); // Find the input field
+
+        // Hide the reply form and reset the input value
+        form.style.display = 'none';
+        input.value = ''; // Reset input field
+      });
+    });
+
+    // Handle reply link clicks
+    const replyLinks = document.querySelectorAll('.reply-link');
+    replyLinks.forEach(link => {
+      link.addEventListener('click', (event) => {
+        const commentId = link.getAttribute('data-comment-id');
+        const replyForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
+        const replyInput = document.getElementById(`replyInput-${commentId}`);
+
+        // Toggle the visibility of the reply form
+        if (replyForm) {
+          replyForm.style.display = 'block'; // Show the reply form
+          replyInput.focus(); // Focus the reply input
+
+          // Pre-fill the reply input with @<firstname-lastname>
+          const authorFirstName = link.closest('.comment').querySelector('strong a').innerText.split(' ')[
+            0];
+          const authorLastName = link.closest('.comment').querySelector('strong a').innerText.split(' ')[1];
+          replyInput.value = `@${authorFirstName}-${authorLastName} `;
+
+          // Prevent removing the prepend text
+          replyInput.addEventListener('keydown', function (event) {
+            const currentText = replyInput.value;
+            const cursorPosition = replyInput.selectionStart;
+
+            // If the user is trying to delete or backspace before the prepend text, prevent it
+            if (event.key === 'Backspace' && cursorPosition <= `@${authorFirstName}-${authorLastName} `
+              .length) {
+              event.preventDefault();
+            }
+          });
+
+        }
+      });
+    });
+  });
+
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+
+
+  // Modal to show image
   function showImage(imageUrl) {
     document.getElementById('modalImage').src = imageUrl;
     var myModal = new bootstrap.Modal(document.getElementById('imageModal'));
