@@ -47,6 +47,12 @@
   .like-button {
     border: none;
   }
+
+  /* comment styles */
+  .comment-meta {
+    font-size: 0.9em;
+    color: #666;
+  }
 </style>
 
 <!-- CSRF token -->
@@ -109,7 +115,7 @@
                 {{ comment.author.first_name }} {{ comment.author.last_name }}:
               </a>
             </strong>
-            {{ comment.content }}
+            <span class="comment-content">{{ comment.content }}</span>
             <span class="comment-meta">{{ comment.created_at }}</span>
 
             <!-- Reply Link (initially visible) -->
@@ -118,7 +124,8 @@
             <!-- End Reply Link -->
 
             <!-- Reply Form (initially hidden) -->
-            <form data-comment-id="{{ comment.id }}" class="reply-form" style="display: none; margin-top: 10px;">
+            <form data-comment-id="{{ comment.id }}" class="reply-form" data-status-id="{{ status.id }}"
+              style="display: none; margin-top: 10px;">
               {% csrf_token %}
               <input type="text" class="form-control" id="replyInput-{{ comment.id }}" placeholder="Write a reply...">
               <button type="button" class="cancel-reply">Cancel</button>
@@ -154,19 +161,15 @@
 </div>
 
 <script>
-  import {
-    handleCommentSubmission
-  } from './commentHandler.js';
-
   document.addEventListener("DOMContentLoaded", () => {
 
     // comment functionality
-    const form = document.querySelector('.comment-form');
-    form.addEventListener('submit', (e) => {
+    const commentform = document.querySelector('.comment-form');
+    commentform.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const statusId = form.getAttribute('data-status-id');
-      const content = form.querySelector('input[type="text"]').value;
+      const statusId = commentform.getAttribute('data-status-id');
+      const content = commentform.querySelector('input[type="text"]').value;
 
 
       if (content.trim() === '') return;
@@ -188,7 +191,7 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            const commentsContainer = form.nextElementSibling;
+            const commentsContainer = commentform.nextElementSibling;
             const newComment = `
             <div class="comment" id="comment-${data.comment_id}">
               <strong>
@@ -216,7 +219,7 @@
           `;
 
             commentsContainer.insertAdjacentHTML('afterbegin', newComment);
-            form.querySelector('input[type="text"]').value = '';
+            commentform.querySelector('input[type="text"]').value = '';
           }
         })
         .catch(err => {
@@ -224,6 +227,12 @@
           alert("There was an error posting your comment. Please try again.");
         })
 
+    }); // finish submit event listener for comment
+
+    // bold the @name's for existing comments
+    document.querySelectorAll('.comment-content').forEach(comment => {
+      comment.innerHTML = comment.innerHTML.replace(/@(\w+)\s(\w+):/g,
+        '<strong>@$1 $2:</strong>');
     });
 
     // Handle scroll to post and comment
@@ -257,7 +266,7 @@
       }
     }
 
-    // Function to expand the comment form based on the 'comment_id'
+    // Function to expand the comment when coming from newsfeed page based on the 'comment_id'
     function expandCommentForm(commentId) {
       // Find the form with the matching 'data-comment-id' attribute
       const commentForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
@@ -297,7 +306,7 @@
           const authorFirstName = link.closest('.comment').querySelector('strong a').innerText.split(' ')[
             0];
           const authorLastName = link.closest('.comment').querySelector('strong a').innerText.split(' ')[1];
-          replyInput.value = `@${authorFirstName}-${authorLastName} `;
+          replyInput.value = `@${authorFirstName} ${authorLastName} `;
 
           // Prevent removing the prepend text
           replyInput.addEventListener('keydown', function (event) {
@@ -305,11 +314,80 @@
             const cursorPosition = replyInput.selectionStart;
 
             // If the user is trying to delete or backspace before the prepend text, prevent it
-            if (event.key === 'Backspace' && cursorPosition <= `@${authorFirstName}-${authorLastName} `
+            if (event.key === 'Backspace' && cursorPosition <= `@${authorFirstName} ${authorLastName} `
               .length) {
               event.preventDefault();
             }
           });
+
+          // Handle form submission for the corresponding comment reply form
+          replyForm.addEventListener('submit', function (e) {
+            console.log('submitted');
+            e.preventDefault();
+
+            const statusId = replyForm.getAttribute('data-status-id');
+            console.log(statusId);
+
+            const content = replyForm.querySelector('input[type="text"]').value;
+            console.log(content);
+
+            if (content.trim() === '') return;
+
+            console.log('Request body:', JSON.stringify({
+              content
+            }));
+
+            fetch(`/post_comment/${statusId}/`, {
+                method: 'POST',
+                headers: {
+                  'X-CSRFToken': getCSRFToken(),
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  content
+                }),
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  const commentsContainer = document.querySelector('.comments');
+                  const boldedContent = data.content.replace(/@(\w+)\s(\w+):/g,
+                    '<strong>@$1 $2:</strong>');
+                  const newComment = `
+                <div class="comment" id="comment-${data.comment_id}">
+                  <strong>
+                    <a href="/profile/${statusId}/">
+                      ${data.author}:
+                    </a>
+                  </strong>
+                  ${boldedContent}
+                  <span class="comment-meta">${data.created_at}</span>
+    
+                  <!-- Reply Link (initially visible) -->
+                  <a href="javascript:void(0);" class="reply-link" data-comment-id="${data.comment_id}"
+                    style="color: blue; text-decoration: underline;">Reply</a>
+    
+                  <!-- Reply Form (initially hidden) -->
+                  <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
+                    {% csrf_token %}
+                    <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
+                    <button type="button" class="cancel-reply">Cancel</button>
+                    <button type="submit">Post Reply</button>
+                  </form>
+                  <!-- End Reply Form -->
+                </div>
+                <hr>
+              `;
+
+                  commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+                  replyForm.querySelector('input[type="text"]').value = '';
+                }
+              })
+              .catch(err => {
+                console.error(err);
+                alert("There was an error posting your comment. Please try again.");
+              })
+          })
 
         }
       });
