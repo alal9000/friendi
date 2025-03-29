@@ -163,7 +163,151 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
 
-    // comment functionality
+    replyToPost();
+    replyToComment();
+    scrollToComment();
+
+    // bold the @name's for existing comments
+    document.querySelectorAll('.comment-content').forEach(comment => {
+      comment.innerHTML = comment.innerHTML.replace(/@(\w+)\s(\w+):/g,
+        '<strong>@$1 $2:</strong>');
+    });
+  }); // DOMContentLoaded finishes
+
+  // scroll to the comment when replying from newsfeed page
+  function scrollToComment() {
+    // Handle scroll to post and comment
+    const params = new URLSearchParams(window.location.search);
+    const commentId = params.get("comment_id");
+    const focus = params.get("focus");
+
+    // scroll to comment
+    if (commentId) {
+      expandCommentForm(commentId);
+      const targetComment = document.getElementById(`comment-${commentId}`);
+      if (targetComment) {
+        targetComment.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+        targetComment.style.backgroundColor = "#ffffcc"; // Highlight effect
+        setTimeout(() => targetComment.style.backgroundColor = "", 2000); // Remove highlight after 2s
+
+        // extract author's name and prefill input
+        const replyInput = document.getElementById(`replyInput-${commentId}`);
+        if (replyInput) {
+          const authorNameElement = targetComment.querySelector('strong a');
+          if (authorNameElement) {
+            const authorName = authorNameElement.innerText.trim();
+            const [firstName, lastName] = authorName.split(' ');
+
+            // Pre-fill the input with the author's name
+            replyInput.value = `@${firstName} ${lastName} `;
+            replyInput.focus();
+
+            // prevent user from deleting the prefilled text
+            replyInput.addEventListener('keydown', function (event) {
+              const cursorPosition = replyInput.selectionStart;
+              const prefixLength = `@${firstName} ${lastName} `.length;
+
+              if (event.key === 'Backspace' && cursorPosition <= prefixLength) {
+                event.preventDefault(); // Prevent backspace if cursor is within the prefilled text
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // scroll to post and input focus
+    if (focus === "post") {
+      const commentInput = document.querySelector('form[data-status-id="{{ status.id }}"] input[type="text"]');
+      if (commentInput) {
+        commentInput.focus(); // Focus on the input
+        commentInput.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    }
+
+    // Function to expand the comment when coming from newsfeed page based on the 'comment_id'
+    function expandCommentForm(commentId) {
+      // Find the form with the matching 'data-comment-id' attribute
+      const commentForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
+      if (commentForm) {
+        // Expand the form (change the display property to show it)
+        commentForm.style.display = 'block'; // For example, change display to 'block'
+
+        const replyInput = document.getElementById(`replyInput-${commentId}`);
+        replyInput.focus();
+
+        // Pre-fill the reply input with @<firstname-lastname>
+        const authorName = commentForm.closest('.comment').querySelector('strong a').innerText;
+        replyInput.value = `@${authorName} `;
+
+        // Prevent removing the prepend text
+        replyInput.addEventListener('keydown', function handleKeyDown(event) {
+          const cursorPosition = replyInput.selectionStart;
+          if (event.key === 'Backspace' && cursorPosition <= `@${authorName} `.length) {
+            event.preventDefault();
+          }
+        }, {
+          once: true
+        });
+
+        // Handle form submission
+        commentForm.addEventListener('submit', function handleSubmit(event) {
+          event.preventDefault();
+
+          const statusId = commentForm.getAttribute('data-status-id');
+          const content = replyInput.value;
+
+          if (content.trim() === '') return;
+
+          postComment(content, statusId)
+            .then(data => {
+              if (data.success) {
+                commentForm.querySelector('input[type="text"]').value = '';
+                commentForm.style.display = 'none';
+                const commentsContainer = document.querySelector('.comments');
+                const boldedContent = data.content.replace(/@(\w+)\s(\w+):/g, '<strong>@$1 $2:</strong>');
+
+                const newComment = `
+              <div class="comment" id="comment-${data.comment_id}">
+                <strong>
+                  <a href="/profile/${statusId}/">${data.author}:</a>
+                </strong>
+                ${boldedContent}
+                <span class="comment-meta">${data.created_at}</span>
+                <a href="javascript:void(0);" class="reply-link" data-comment-id="${data.comment_id}">Reply</a>
+                <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none;">
+                  {% csrf_token %}
+                  <input type="text" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
+                  <button type="button" class="cancel-reply">Cancel</button>
+                  <button type="submit">Post Reply</button>
+                </form>
+              </div>
+              <hr>
+            `;
+
+                commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert("Error posting comment");
+            });
+        }, {
+          once: true
+        });
+      }
+    }
+  }
+
+  // reply to a post functionality
+  function replyToPost() {
+
     const commentform = document.querySelector('.comment-form');
     commentform.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -171,24 +315,9 @@
       const statusId = commentform.getAttribute('data-status-id');
       const content = commentform.querySelector('input[type="text"]').value;
 
-
       if (content.trim() === '') return;
 
-      console.log('Request body:', JSON.stringify({
-        content
-      }));
-
-      fetch(`/post_comment/${statusId}/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content
-          }),
-        })
-        .then(response => response.json())
+      postComment(content, statusId)
         .then(data => {
           if (data.success) {
             const commentsContainer = commentform.nextElementSibling;
@@ -228,67 +357,10 @@
         })
 
     }); // finish submit event listener for comment
+  }
 
-    // bold the @name's for existing comments
-    document.querySelectorAll('.comment-content').forEach(comment => {
-      comment.innerHTML = comment.innerHTML.replace(/@(\w+)\s(\w+):/g,
-        '<strong>@$1 $2:</strong>');
-    });
-
-    // Handle scroll to post and comment
-    const params = new URLSearchParams(window.location.search);
-    const commentId = params.get("comment_id");
-    const focus = params.get("focus");
-
-    // scroll to comment
-    if (commentId) {
-      expandCommentForm(commentId);
-      const targetComment = document.getElementById(`comment-${commentId}`);
-      if (targetComment) {
-        targetComment.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-        targetComment.style.backgroundColor = "#ffffcc"; // Highlight effect
-        setTimeout(() => targetComment.style.backgroundColor = "", 2000); // Remove highlight after 2s
-      }
-    }
-
-    // scroll to post and input focus
-    if (focus === "post") {
-      const commentInput = document.querySelector('form[data-status-id="{{ status.id }}"] input[type="text"]');
-      if (commentInput) {
-        commentInput.focus(); // Focus on the input
-        commentInput.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-      }
-    }
-
-    // Function to expand the comment when coming from newsfeed page based on the 'comment_id'
-    function expandCommentForm(commentId) {
-      // Find the form with the matching 'data-comment-id' attribute
-      const commentForm = document.querySelector(`.reply-form[data-comment-id="${commentId}"]`);
-      if (commentForm) {
-        // Expand the form (change the display property to show it)
-        commentForm.style.display = 'block'; // For example, change display to 'block'
-      }
-    }
-
-    // Handle Cancel Button Click
-    const cancelButtons = document.querySelectorAll('.cancel-reply');
-    cancelButtons.forEach(button => {
-      button.addEventListener('click', (event) => {
-        const form = event.target.closest('form'); // Find the parent form
-        const input = form.querySelector('input'); // Find the input field
-
-        // Hide the reply form and reset the input value
-        form.style.display = 'none';
-        input.value = ''; // Reset input field
-      });
-    });
-
+  // reply to a comment on a post functionality
+  function replyToComment() {
     // Handle reply link clicks
     const replyLinks = document.querySelectorAll('.reply-link');
     replyLinks.forEach(link => {
@@ -322,32 +394,13 @@
 
           // Handle form submission for the corresponding comment reply form
           replyForm.addEventListener('submit', function (e) {
-            console.log('submitted');
             e.preventDefault();
-
             const statusId = replyForm.getAttribute('data-status-id');
-            console.log(statusId);
-
             const content = replyForm.querySelector('input[type="text"]').value;
-            console.log(content);
 
             if (content.trim() === '') return;
 
-            console.log('Request body:', JSON.stringify({
-              content
-            }));
-
-            fetch(`/post_comment/${statusId}/`, {
-                method: 'POST',
-                headers: {
-                  'X-CSRFToken': getCSRFToken(),
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  content
-                }),
-              })
-              .then(response => response.json())
+            postComment(content, statusId)
               .then(data => {
                 if (data.success) {
                   const commentsContainer = document.querySelector('.comments');
@@ -392,13 +445,51 @@
         }
       });
     });
-  });
 
+    // Handle Cancel Button Click
+    const cancelButtons = document.querySelectorAll('.cancel-reply');
+    cancelButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        const form = event.target.closest('form'); // Find the parent form
+        const input = form.querySelector('input'); // Find the input field
+
+        // Hide the reply form and reset the input value
+        form.style.display = 'none';
+        input.value = ''; // Reset input field
+      });
+    });
+  }
+
+  // fetch api request
+  function postComment(content, statusId) {
+    return fetch(`/post_comment/${statusId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCSRFToken(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          return data;
+        } else {
+          throw new Error('Failed to post comment');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("There was an error posting your comment. Please try again.");
+      });
+  }
+
+  // read the csrf token to make requests
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
-
-
 
   // Modal to show image
   function showImage(imageUrl) {
