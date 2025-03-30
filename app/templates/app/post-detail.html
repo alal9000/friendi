@@ -172,6 +172,15 @@
       comment.innerHTML = comment.innerHTML.replace(/@(\w+)\s(\w+):/g,
         '<strong>@$1 $2:</strong>');
     });
+
+    // like functionality
+    const likeButton = document.querySelector(".like-button");
+    if (likeButton) {
+      likeButton.addEventListener("click", function () {
+        const statusId = this.getAttribute("data-status-id");
+        toggleLike(statusId, likeButton);
+      });
+    }
   }); // DOMContentLoaded finishes
 
   // scroll to the comment when replying from newsfeed page
@@ -486,6 +495,32 @@
       });
   }
 
+  // toggle like functionality
+  function toggleLike(statusId, button) {
+    fetch(`/react/${statusId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCSRFToken(),
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const countElement = button.querySelector('.count');
+          countElement.textContent = data.like_count;
+
+          // Toggle the heart color based on like status
+          button.querySelector(".emoji").textContent = data.isLiked ? "❤️" : "🤍";
+
+          const likeText = button.nextElementSibling; // Assuming like-text is right after button
+          likeText.style.display = data.isLiked ? "inline" : "none";
+        } else {
+          console.error("Error:", data.error);
+        }
+      })
+      .catch((error) => console.error("Error:", error));
+  }
   // read the csrf token to make requests
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;

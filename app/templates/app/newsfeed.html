@@ -114,6 +114,7 @@
           <span class="like-text" {% if user not in status.liked_by.all %} style="display: none;" {% endif %}>
             <em>You like this</em>
           </span>
+          <!-- End Like Button -->
 
           <!-- comment section -->
           <div class="comment-section">
@@ -125,7 +126,7 @@
 
             <!-- Existing comments -->
             <div class="comments">
-              {% for comment in status.comments.all|slice:":2" reversed %}
+              {% for comment in status.comments.all|dictsortreversed:"created_at"|slice:":2" %}
               <hr>
               <div class="comment">
                 <strong>
@@ -133,7 +134,7 @@
                     {{ comment.author.first_name }} {{ comment.author.last_name }}:
                   </a>
                 </strong>
-                {{ comment.content }}
+                <span class="comment-content">{{ comment.content }}</span>
                 <span class="comment-meta">{{ comment.created_at }}</span>
 
                 <!-- Reply button for post comments -->
@@ -186,6 +187,12 @@
         const statusId = this.getAttribute("data-status-id");
         toggleLike(statusId, button);
       });
+    });
+
+    // bold the @name's for existing comments
+    document.querySelectorAll('.comment-content').forEach(comment => {
+      comment.innerHTML = comment.innerHTML.replace(/@(\w+)\s(\w+):/g,
+        '<strong>@$1 $2:</strong>');
     });
   });
 
