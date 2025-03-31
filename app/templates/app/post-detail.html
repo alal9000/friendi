@@ -120,10 +120,10 @@
 
             <!-- User Avatar -->
             {% if comment.author.profile.profile_pic %}
-            <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid me-2"
+            <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid"
               alt="{{ comment.author.username }}">
             {% else %}
-            <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid me-2" alt="Default Avatar">
+            <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar">
             {% endif %}
 
             <strong>
@@ -342,7 +342,7 @@
 
       if (content.trim() === '') return;
 
-      postComment(content, statusId)
+      postComment(content, statusId, 0)
         .then(data => {
           if (data.success) {
             const commentsContainer = commentform.nextElementSibling;
@@ -425,7 +425,7 @@
 
             if (content.trim() === '') return;
 
-            postComment(content, statusId)
+            postComment(content, statusId, commentId)
               .then(data => {
                 if (data.success) {
                   const commentsContainer = document.querySelector('.comments');
@@ -486,7 +486,7 @@
   }
 
   // fetch api request
-  function postComment(content, statusId) {
+  function postComment(content, statusId, parentCommentId = null) {
     return fetch(`/post_comment/${statusId}/`, {
         method: 'POST',
         headers: {
@@ -494,7 +494,9 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content
+          content,
+          statusId,
+          parent_comment_id: parentCommentId
         }),
       })
       .then(response => response.json())

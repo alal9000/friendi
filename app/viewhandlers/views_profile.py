@@ -35,7 +35,7 @@ def profile(request, profile_id):
     ):
         messages.success(
             request,
-            "Your support helps keep us going. Tell your friends and family about Socializer or invite them below.",
+            "Your support helps keep us going. Tell your friends and family about Friendi or invite them below.",
         )
         # Set the session flag to indicate that the message has been shown
         request.session["profile_support_message_shown"] = True
@@ -203,11 +203,11 @@ def profile(request, profile_id):
                 email = invite_friend_form.cleaned_data["email"]
                 # Send an email invitation
                 message = (
-                    f"Hi, <a href='https://socializer.au/accounts/profile/{request.user.profile.id}'>{request.user.first_name} {request.user.last_name}</a> "
-                    "has invited you to join Socializer. Sign up at: <a href='https://socializer.au/accounts/signup/'>socializer.au/accounts/signup</a>"
+                    f"Hi, <a href='https://friendi.com.au/accounts/profile/{request.user.profile.id}'>{request.user.first_name} {request.user.last_name}</a> "
+                    "has invited you to join Friendi. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
                 )
                 send_mail(
-                    "Invitation to Socializer",
+                    "Invitation to Friendi",
                     "",
                     settings.EMAIL_HOST_USER,
                     [email],

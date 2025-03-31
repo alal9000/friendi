@@ -1,4 +1,4 @@
-{% extends "app/main.html" %} 
+{% extends "app/main.html" %}
 {% load static %}
 {% block content %}
 
@@ -8,21 +8,20 @@
   }
 
   .single-image {
-    max-width: 100%; 
+    max-width: 100%;
     max-height: auto;
   }
-  
 </style>
-    <div class="container viewport-height">
-      <div class="row justify-content-center">
-        <div class="col">
-          <a class="btn btn-dark my-3" href="{% url 'gallery' profile.id %}">Go Back</a>
-          <div>
-            <img class="single-image" src="{{photo.image.url}}" alt="single image on socializer">
-          </div>
-          <p>{{photo.description}}</p>  
-
-        </div>
+<div class="container viewport-height">
+  <div class="row justify-content-center">
+    <div class="col">
+      <a class="btn btn-dark my-3" href="{% url 'gallery' profile.id %}">Go Back</a>
+      <div>
+        <img class="single-image" src="{{photo.image.url}}" alt="single image on friendi">
       </div>
+      <p>{{photo.description}}</p>
+
     </div>
+  </div>
+</div>
 {% endblock %}

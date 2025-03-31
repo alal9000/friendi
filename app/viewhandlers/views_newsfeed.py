@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from app.forms import StatusUpdateForm, StatusCommentForm
-from app.models import StatusUpdate
+from app.models import StatusComment, StatusUpdate
 from friends.models import Friend
 from notifications.models import Notification
 
@@ -87,13 +87,37 @@ def post_comment(request, status_id):
             data = json.loads(request.body)
             form = StatusCommentForm(data)
             if form.is_valid():
+                parent_comment_id = data.get("parent_comment_id")
+
+                # Initialize parent_comment_author to None in case there is no parent comment
+                parent_comment_author = None
+
                 comment = form.save(commit=False)
                 comment.status = status
                 comment.author = request.user
                 comment.save()
 
+                # If it's a reply to another comment, get the parent comment and send a notification to its author
+                if parent_comment_id and parent_comment_id != "0":
+                    parent_comment = get_object_or_404(
+                        StatusComment, id=parent_comment_id
+                    )
+                    parent_comment_author = parent_comment.author
+
+                    # Send notification to the parent comment's author (if different from the current user)
+                    if parent_comment_author and parent_comment_author != request.user:
+                        parent_profile = parent_comment_author.profile
+                        Notification.objects.create(
+                            user=parent_profile,
+                            message=f"@{request.user.first_name} {request.user.last_name} replied to your comment",
+                            link=f"/post/{status.id}",
+                        )
+
                 # Send notification to the status author
-                if request.user != status.profile.user:
+                if request.user != status.profile.user and (
+                    not parent_comment_author
+                    or parent_comment_author != status.profile.user
+                ):
                     Notification.objects.create(
                         user=status.profile,  # Status author
                         message=f"@{request.user.first_name} {request.user.last_name} commented on your status",

@@ -135,14 +135,14 @@
             <div class="comments">
               {% for comment in status.comments.all|dictsortreversed:"created_at"|slice:":2" %}
               <hr>
-              <div class="comment d-flex align-items-center">
+              <div class="comment">
 
                 <!-- User Avatar -->
                 {% if comment.author.profile.profile_pic %}
-                <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid me-2"
+                <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid"
                   alt="{{ comment.author.username }}">
                 {% else %}
-                <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid me-2" alt="Default Avatar">
+                <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar">
                 {% endif %}
 
                 <strong>

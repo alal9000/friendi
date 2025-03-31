@@ -115,7 +115,7 @@ class ProfileDescriptionForm(ModelForm):
         }
 
 
-# invite friends to socializer
+# invite friends to friendi
 class InviteFriendForm(forms.Form):
     email = forms.EmailField(
         label="",
