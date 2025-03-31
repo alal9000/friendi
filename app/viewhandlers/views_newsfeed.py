@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from app.forms import StatusUpdateForm, StatusCommentForm
 from app.models import StatusUpdate
 from friends.models import Friend
+from notifications.models import Notification
 
 
 def newsfeed(request):
@@ -90,6 +91,15 @@ def post_comment(request, status_id):
                 comment.status = status
                 comment.author = request.user
                 comment.save()
+
+                # Send notification to the status author
+                if request.user != status.profile.user:
+                    Notification.objects.create(
+                        user=status.profile,  # Status author
+                        message=f"@{request.user.first_name} {request.user.last_name} commented on your status",
+                        link=f"/post/{status.id}",
+                    )
+
                 return JsonResponse(
                     {
                         "success": True,
