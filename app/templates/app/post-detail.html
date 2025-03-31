@@ -53,6 +53,13 @@
     font-size: 0.9em;
     color: #666;
   }
+
+  .comment-avatar {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 </style>
 
 <!-- CSRF token -->
@@ -60,7 +67,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col">
+    <div class="col-md-8 mx-auto viewport-height">
       <h1>Post Detail</h1>
       <div class="status-update">
         <div class="status-content">
@@ -102,7 +109,7 @@
         <form action="{% url 'post_comment' status.id %}" data-status-id="{{ status.id }}" class="comment-form">
           {% csrf_token %}
           <input type="text" class="form-control" placeholder="Write a comment..." />
-          <button type="submit">Post Reply</button>
+          <button type="submit" class="btn btn-success">Post Reply</button>
         </form>
         <!-- End Add a new comment -->
 
@@ -110,6 +117,15 @@
         <div class="comments">
           {% for comment in status.comments.all reversed %}
           <div id="comment-{{ comment.id }}" class="comment">
+
+            <!-- User Avatar -->
+            {% if comment.author.profile.profile_pic %}
+            <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid me-2"
+              alt="{{ comment.author.username }}">
+            {% else %}
+            <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid me-2" alt="Default Avatar">
+            {% endif %}
+
             <strong>
               <a href="{% url 'profile' comment.author.id %}">
                 {{ comment.author.first_name }} {{ comment.author.last_name }}:
@@ -128,8 +144,8 @@
               style="display: none; margin-top: 10px;">
               {% csrf_token %}
               <input type="text" class="form-control" id="replyInput-{{ comment.id }}" placeholder="Write a reply...">
-              <button type="button" class="cancel-reply">Cancel</button>
-              <button type="submit">Post Reply</button>
+              <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
+              <button type="submit" class="btn btn-success">Post Reply</button>
             </form>
             <!-- End Reply Form -->
 
@@ -293,8 +309,8 @@
                 <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none;">
                   {% csrf_token %}
                   <input type="text" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
-                  <button type="button" class="cancel-reply">Cancel</button>
-                  <button type="submit">Post Reply</button>
+                  <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
+                  <button type="submit" class="btn btn-success">Post Reply</button>
                 </form>
               </div>
               <hr>
@@ -348,8 +364,8 @@
               <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
                 {% csrf_token %}
                 <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
-                <button type="button" class="cancel-reply">Cancel</button>
-                <button type="submit">Post Reply</button>
+                <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
+                <button type="submit" class="btn btn-success">Post Reply</button>
               </form>
               <!-- End Reply Form -->
             </div>
@@ -433,8 +449,8 @@
                   <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
                     {% csrf_token %}
                     <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
-                    <button type="button" class="cancel-reply">Cancel</button>
-                    <button type="submit">Post Reply</button>
+                    <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
+                    <button type="submit" class="btn btn-success">Post Reply</button>
                   </form>
                   <!-- End Reply Form -->
                 </div>

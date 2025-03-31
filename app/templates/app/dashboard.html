@@ -2,10 +2,12 @@
 
 <style>
   .hero-image {
-    width: 100%; /* make image take up full width of its container */
-    height: auto; /* maintain aspect ratio */
+    width: 100%;
+    /* make image take up full width of its container */
+    height: auto;
+    /* maintain aspect ratio */
   }
-  
+
 
 
   .empty-events {
@@ -32,12 +34,7 @@
   {% for message in messages %}
   <div class="alert alert-success alert-dismissible fade show" role="alert">
     {{ message }}
-    <button
-      type="button"
-      class="btn-close"
-      data-bs-dismiss="alert"
-      aria-label="Close"
-    ></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   {% endfor %}
 </div>
@@ -45,9 +42,7 @@
 
 <!-- showcase -->
 {% if not request.user.is_authenticated %}
-<section
-  class="bg-dark text-light p-5 p-lg-0 pt-lg-5 text-center text-sm-start"
->
+<section class="bg-dark text-light p-5 p-lg-0 pt-lg-5 text-center text-sm-start">
   <div class="container">
     <div class="d-sm-flex align-items-center justify-content-between mb-2">
       <div>
@@ -70,18 +65,11 @@
 <section>
   <div class="container">
     {% if user.is_authenticated %}
-    <div
-      class="d-flex flex-column flex-md-row justify-content-between align-items-center"
-    >
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
       <h1>Hi, {{request.user.first_name }} 👋</h1>
       <form method="POST" action="{% url 'search_events' %}" class="d-flex">
         {% csrf_token %}
-        <input
-          class="form-control"
-          name="searched"
-          type="search"
-          placeholder="Search Events or Hosts"
-        />
+        <input class="form-control" name="searched" type="search" placeholder="Search Events or Hosts" />
         <button type="submit" class="btn btn-secondary ms-1">Search</button>
       </form>
     </div>
@@ -96,23 +84,13 @@
             <em>{{ event.host.user.first_name }}</em> {{ event.host.user.last_name|slice:"1" }}</em>
           </h6>
           {% if event.host.profile_pic %}
-          <img
-            src="{{ event.host.profile_pic.url }}"
-            class="profile-pic"
-            alt="{{ event.title }}"
-          />
+          <img src="{{ event.host.profile_pic.url }}" class="profile-pic" alt="{{ event.title }}" />
           {% else %}
-          <img
-            src="{% static 'images/profile2.png' %}"
-            class="profile-pic"
-            alt="{{ event.title }}"
-          />
+          <img src="{% static 'images/profile2.png' %}" class="profile-pic" alt="{{ event.title }}" />
           {% endif %}
           <div class="card-body">
             <p class="card-text">{{ event.description|truncatechars:50 }}</p>
-            <a href="{% url 'event' event.id %}" class="btn btn-success"
-              >Browse Event</a
-            >
+            <a href="{% url 'event' event.id %}" class="btn btn-success">Browse Event</a>
           </div>
         </div>
       </div>
@@ -124,20 +102,12 @@
     <div class="pagination mt-2">
       {% if events.has_previous %}
       <a href="?page=1" class="page-link">&laquo; First</a>
-      <a href="?page={{ events.previous_page_number }}" class="page-link"
-        >&lsaquo; Previous</a
-      >
+      <a href="?page={{ events.previous_page_number }}" class="page-link">&lsaquo; Previous</a>
       {% endif %}
-      <span class="current-page"
-        >Page {{ events.number }} of {{ events.paginator.num_pages }}</span
-      >
+      <span class="current-page">Page {{ events.number }} of {{ events.paginator.num_pages }}</span>
       {% if events.has_next %}
-      <a href="?page={{ events.next_page_number }}" class="page-link"
-        >Next &rsaquo;</a
-      >
-      <a href="?page={{ events.paginator.num_pages }}" class="page-link"
-        >Last &raquo;</a
-      >
+      <a href="?page={{ events.next_page_number }}" class="page-link">Next &rsaquo;</a>
+      <a href="?page={{ events.paginator.num_pages }}" class="page-link">Last &raquo;</a>
       {% endif %}
     </div>
     {% endif %} {% else %}

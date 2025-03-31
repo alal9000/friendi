@@ -127,6 +127,10 @@ def contact(request):
     return render(request, "app/contact.html")
 
 
+def feedback(request):
+    return render(request, "app/feedback.html")
+
+
 def faqs(request):
     return render(request, "app/faqs.html")
 

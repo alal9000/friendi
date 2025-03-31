@@ -69,6 +69,13 @@
     border-top: 1px solid #b5b4b4;
     margin: 5px 0;
   }
+
+  .comment-avatar {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 </style>
 
 <!-- CSRF token -->
@@ -78,7 +85,7 @@
 <section>
   <div class="container">
     <div class="row">
-      <div class="col viewport-height">
+      <div class="col-md-8 mx-auto viewport-height">
         <h1>Newsfeed</h1>
 
         <!-- status block -->
@@ -121,14 +128,23 @@
             <!-- Reply button for original post -->
             <form action="{% url 'post_detail' status_id=status.id %}" method="get">
               <input type="hidden" name="focus" value="post">
-              <button type="submit">Reply</button>
+              <button type="submit" class="btn btn-success">Reply</button>
             </form>
 
             <!-- Existing comments -->
             <div class="comments">
               {% for comment in status.comments.all|dictsortreversed:"created_at"|slice:":2" %}
               <hr>
-              <div class="comment">
+              <div class="comment d-flex align-items-center">
+
+                <!-- User Avatar -->
+                {% if comment.author.profile.profile_pic %}
+                <img src="{{ comment.author.profile.profile_pic.url }}" class="comment-avatar img-fluid me-2"
+                  alt="{{ comment.author.username }}">
+                {% else %}
+                <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid me-2" alt="Default Avatar">
+                {% endif %}
+
                 <strong>
                   <a href="{% url 'profile' comment.author.id %}">
                     {{ comment.author.first_name }} {{ comment.author.last_name }}:

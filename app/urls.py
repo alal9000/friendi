@@ -11,6 +11,7 @@ urlpatterns = [
     path("thank-you", views.thank_you, name="thank-you"),
     path("recommendations", views.recommendations, name="recommendations"),
     path("contact", views.contact, name="contact"),
+    path("feedback", views.feedback, name="feedback"),
     path("faqs", views.faqs, name="faqs"),
     path("delete-your-data", views.data_delete, name="data_delete"),
     path("privacy-policy", views.privacy_policy, name="privacy_policy"),
