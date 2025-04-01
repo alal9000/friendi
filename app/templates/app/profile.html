@@ -189,9 +189,9 @@
 								<h4>Current Status: </h4>
 								<p id="status-container">{{ latest_status_update.content }}</p>
 								<p id="datetime">Posted on {{ latest_status_update.date_posted|date:"F j, Y, g:i a" }}</p>
-								<a href="{% url 'post_detail' status_id=latest_status_update.id %}" class="btn btn-success">Go to
+								<a href="{% url 'post_detail' status_id=latest_status_update.id %}" class="btn btn-success mt-2">Go to
 									Status</a>
-								<input class="btn btn-warning" id="clear-status-btn" type="submit" value="Clear Status">
+								<input class="btn btn-warning mt-2" id="clear-status-btn" type="submit" value="Clear Status">
 							</div>
 							{% endif %}
 							<!-- end latest status update -->

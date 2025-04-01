@@ -26,7 +26,7 @@ urlpatterns = [
     ),
     path(
         "post_comment/<int:status_id>/",
-        views_newsfeed.post_comment,
+        views_post_detail.post_comment,
         name="post_comment",
     ),
     # all_auth urls

@@ -348,6 +348,8 @@
             const commentsContainer = commentform.nextElementSibling;
             const newComment = `
             <div class="comment" id="comment-${data.comment_id}">
+              <!-- User Avatar -->
+              <img src="${data.avatar_url}" class="comment-avatar img-fluid" alt="${data.author}">
               <strong>
                 <a href="/profile/${statusId}/">
                   ${data.author}:
@@ -432,30 +434,32 @@
                   const boldedContent = data.content.replace(/@(\w+)\s(\w+):/g,
                     '<strong>@$1 $2:</strong>');
                   const newComment = `
-                <div class="comment" id="comment-${data.comment_id}">
-                  <strong>
-                    <a href="/profile/${statusId}/">
-                      ${data.author}:
-                    </a>
-                  </strong>
-                  ${boldedContent}
-                  <span class="comment-meta">${data.created_at}</span>
-    
-                  <!-- Reply Link (initially visible) -->
-                  <a href="javascript:void(0);" class="reply-link" data-comment-id="${data.comment_id}"
-                    style="color: blue; text-decoration: underline;">Reply</a>
-    
-                  <!-- Reply Form (initially hidden) -->
-                  <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
-                    {% csrf_token %}
-                    <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
-                    <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
-                    <button type="submit" class="btn btn-success">Post Reply</button>
-                  </form>
-                  <!-- End Reply Form -->
-                </div>
-                <hr>
-              `;
+                  <div class="comment" id="comment-${data.comment_id}">
+                    <!-- User Avatar -->
+                    <img src="${data.avatar_url}" class="comment-avatar img-fluid" alt="${data.author}">
+                    <strong>
+                      <a href="/profile/${statusId}/">
+                        ${data.author}:
+                      </a>
+                    </strong>
+                    ${boldedContent}
+                    <span class="comment-meta">${data.created_at}</span>
+      
+                    <!-- Reply Link (initially visible) -->
+                    <a href="javascript:void(0);" class="reply-link" data-comment-id="${data.comment_id}"
+                      style="color: blue; text-decoration: underline;">Reply</a>
+      
+                    <!-- Reply Form (initially hidden) -->
+                    <form data-comment-id="${data.comment_id}" class="reply-form" style="display: none; margin-top: 10px;">
+                      {% csrf_token %}
+                      <input type="text" class="form-control" id="replyInput-${data.comment_id}" placeholder="Write a reply...">
+                      <button type="button" class="btn btn-warning cancel-reply">Cancel</button>
+                      <button type="submit" class="btn btn-success">Post Reply</button>
+                    </form>
+                    <!-- End Reply Form -->
+                  </div>
+                  <hr>
+                `;
 
                   commentsContainer.insertAdjacentHTML('afterbegin', newComment);
                   replyForm.querySelector('input[type="text"]').value = '';

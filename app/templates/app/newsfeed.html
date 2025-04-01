@@ -99,8 +99,10 @@
             <img src="{% static 'images/default-avatar.png' %}" class="avatar img-fluid" alt="Default Avatar" />
             {% endif %}
             <p class="status-text">
-              <strong>{{ status.profile.user.username }}</strong>:
+              <a href="{% url 'profile' status.profile.id %}">
+                <strong>{{ status.profile.user.first_name }} {{ status.profile.user.last_name }}</strong>:</a>
               {{status.content }}
+
             </p>
 
           </div>
@@ -161,7 +163,7 @@
               {% endfor %}
 
               {% if status.comments.count > 2 %}
-              <a href="#">See all comments</a>
+              <a href="{% url 'post_detail' status_id=status.id %}">See all comments</a>
               {% endif %}
             </div>
           </div>
