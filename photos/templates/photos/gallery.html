@@ -54,7 +54,7 @@
               </small>
             </div>
             <div class="d-flex justify-content-between">
-              <a href="{% url 'photo' profile.id photo.id %}" class="btn btn-primary btn-sm m-1 w-100">View</a>
+              <a href="{% url 'photo' profile.id photo.id %}" class="btn btn-success btn-sm m-1 w-100">View</a>
               {% if request.user.profile == profile %}
               <!-- Delete photo form -->
               <form method="POST" action="">

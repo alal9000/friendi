@@ -30,12 +30,7 @@
       {% for message in messages %}
       <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
       {% endfor %}
     </div>
@@ -46,22 +41,16 @@
         <section class="mb-5">
           <h1 class="mb-4">Friends of {{ profile.user.first_name }}</h1>
           <h3>Search friends</h3>
-          <input
-            type="text"
-            id="search-input"
-            class="form-control w-50 p-2 rounded border border-grey mb-2"
-            placeholder="Name..."
-          />
+          <input type="text" id="search-input" class="form-control w-50 p-2 rounded border border-grey mb-2"
+            placeholder="Name..." />
         </section>
         <!-- end -->
 
         <ul class="list-unstyled">
           {% if friends %} {% for friend in friends %}
           <li class="mb-3">
-            <a
-              class="text-decoration-none friend-link"
-              href="{% url 'profile' friend.id %}"
-              ><img class="avatar" src="{{ friend.profile_pic.url }}" alt="" />
+            <a class="text-decoration-none friend-link" href="{% url 'profile' friend.id %}"><img class="avatar"
+                src="{{ friend.profile_pic.url }}" alt="" />
               <p class="username">{{ friend.user.first_name }}</p>
               <!-- Only show unfriend form if the current user matches the profile owner -->
               {% if request.user.profile == profile %}

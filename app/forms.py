@@ -74,7 +74,7 @@ class StatusUpdateForm(forms.ModelForm):
                 attrs={"class": "form-control", "name": "status_image"}
             ),
         }
-        labels = {"content": "", "image": "Upload an image"}
+        labels = {"content": "", "image": "Optionally add an image"}
 
 
 # status comment form

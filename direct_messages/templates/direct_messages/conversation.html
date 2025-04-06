@@ -2,38 +2,38 @@
 {% block content %}
 
 <style>
-#chat-area-conversation {
-  max-height: 600px;
-  flex: 1;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-}
+  #chat-area-conversation {
+    max-height: 600px;
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
 
-.avatar {
-  width: 50px;
-  height: 50px;
-  margin: 0 auto;
-  border-radius: 50%;
-  object-fit: cover;
-}
+  .avatar {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
 
-.chat-container {
-  border: 2px solid #dedede;
-  background-color: #f1f1f1;
-  border-radius: 5px;
-  padding: 10px;
-  margin: 10px 0;
-}
+  .chat-container {
+    border: 2px solid #dedede;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+  }
 
-.time-right {
-  color: grey;
-  font-style: italic;
-  font-size: small;
+  .time-right {
+    color: grey;
+    font-style: italic;
+    font-size: small;
 
-}
+  }
 </style>
 
 <!-- main section -->
@@ -45,32 +45,33 @@
 
         <!-- chat messages -->
         <section>
-          <div id="chat-area-conversation">       
+          <div id="chat-area-conversation">
             <ul class="list-unstyled">
               {% for message in messages %}
               <li>
                 <div class="chat-container">
-                  <a href="{% url 'profile' message.sender.id %}"><img class="avatar" src="{{ message.sender.profile_pic.url }}" alt="Avatar"></a>
+                  <a href="{% url 'profile' message.sender.id %}"><img class="avatar"
+                      src="{{ message.sender.profile_pic.url }}" alt="Avatar"></a>
                   <p><b>{{message.sender.user.first_name}}: </b>{{ message.message }}</p>
                   <span class="time-right">{{ message.timestamp }}</span>
                 </div>
               </li>
-              {% endfor %} 
+              {% endfor %}
             </ul>
           </div>
-      </section>
+        </section>
 
-      <!-- Reply form -->
-      <section class="mt-3">
-        <form method="post" action="{% url 'conversation' sender.id receiver.id %}">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="message-text" class="col-form-label">Message:</label>
-            <textarea class="form-control" id="message-text" name="message" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary mt-2">Submit</button>
-        </form>
-      </section>
+        <!-- Reply form -->
+        <section class="mt-3">
+          <form method="post" action="{% url 'conversation' sender.id receiver.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="message-text" class="col-form-label">Message:</label>
+              <textarea class="form-control" id="message-text" name="message" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-success mt-2">Submit</button>
+          </form>
+        </section>
 
       </div>
     </div>
@@ -78,14 +79,14 @@
 </section>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function () {
     function scrollToBottom() {
       var chatArea = document.getElementById("chat-area-conversation");
       chatArea.scrollTop = chatArea.scrollHeight;
     }
-  
+
     setTimeout(scrollToBottom, 100);
   });
-  </script>
+</script>
 
 {% endblock %}

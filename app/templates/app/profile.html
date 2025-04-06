@@ -297,7 +297,7 @@
 				<div class="card card-body mb-2">
 					<div>
 						<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
-								Photo Gallery</a></h1>
+								Status Gallery</a></h1>
 
 						{% for photo in user_photos %}
 						<a href="{% url 'gallery' profile.id %}"><img src="{{photo.image.url}}" alt=""
