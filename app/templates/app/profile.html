@@ -152,14 +152,19 @@
 				</div>
 				{% else %}
 				<!-- display age band and description as plain text -->
+				{% if profile.description or profile.age_band != "rather_not_say" %}
 				<div class="card card-body mb-2">
 					{% if profile.description %}
 					<h4>About Me</h4>
 					<p>{{ profile.description }}</p>
 					{% endif %}
+					{% if profile.age_band != "rather_not_say" %}
 					<h4>Age Band</h4>
 					<p>{{ profile.get_age_band_display }}</p>
+					{% endif %}
 				</div>
+				{% endif %}
+
 
 
 				{% endif %}

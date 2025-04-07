@@ -85,6 +85,7 @@ def event(request, event_id):
             EventComment.objects.create(
                 profile=request_profile, event=event, comment=comment_text
             )
+            messages.success(request, "Your message has been posted successfully.")
 
             # notify attendees when a comment is added
             attendees = [event.host] + list(event.guests.all())

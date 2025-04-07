@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from PIL import Image, ImageOps
 
 AGE_BAND_CHOICES = [
-    ("rather_not_say", "Rather not say"),
+    ("rather_not_say", "Leave blank"),
     ("under_25", "Under 25"),
     ("25_to_35", "25 - 35"),
     ("36_and_over", "36 and over"),
