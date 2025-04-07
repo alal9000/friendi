@@ -169,6 +169,7 @@
 			<!-- column 2 -->
 			<div class="col-md">
 				<!-- status-update form -->
+				{% if request.user.profile == profile %}
 				<div class="card card-body mb-2">
 
 					<!-- Button container for update and clear buttons -->
@@ -206,6 +207,7 @@
 
 
 				</div>
+				{% endif %}
 				<!-- end update status form -->
 
 				<!-- Events section -->

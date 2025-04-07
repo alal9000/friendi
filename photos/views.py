@@ -9,6 +9,27 @@ from .models import Photo
 def gallery(request, profile_id):
     profile = get_object_or_404(Profile, id=profile_id)
 
+    # Handle POST request to delete photo
+    if request.method == "POST":
+        photo_id = request.POST.get("photo_id")
+        photo = get_object_or_404(Photo, id=photo_id, profile=profile)
+
+        # Optional: check ownership before deletion
+        if request.user.profile == profile:
+            photo.delete()
+            from django.contrib import messages
+
+            messages.success(request, "Photo deleted successfully.")
+        else:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden("You are not allowed to delete this photo.")
+
+        # Redirect to avoid re-submitting on page refresh
+        from django.shortcuts import redirect
+
+        return redirect("gallery", profile_id=profile_id)
+
     photos = Photo.objects.filter(profile=profile)
 
     # Photos Pagination
