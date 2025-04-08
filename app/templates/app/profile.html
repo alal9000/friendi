@@ -174,22 +174,22 @@
 			<!-- column 2 -->
 			<div class="col-md">
 				<!-- status-update form -->
-				{% if request.user.profile == profile %}
-				<div class="card card-body mb-2">
+				<!-- {% if request.user.profile == profile %} -->
+				<!-- <div class="card card-body mb-2"> -->
 
-					<!-- Button container for update and clear buttons -->
-					<div class="status-buttons">
+				<!-- Button container for update and clear buttons -->
+				<!-- <div class="status-buttons">
 						<h2>Post a Status</h2>
 						<form method="POST" action="" enctype="multipart/form-data" style="display:inline-block;">
 							{% csrf_token %}
-							{{ status_form.as_p }}
+							{{ status_form.as_p }} -->
 
-							<input class="btn btn-success" type="submit" name="status-update" value="Update Status">
+				<!-- <input class="btn btn-success" type="submit" name="status-update" value="Update Status">
 							{% if latest_status_update %}
 
-							{% endif %}
-							<!-- latest status update -->
-							{% if latest_status_update %}
+							{% endif %} -->
+				<!-- latest status update -->
+				<!-- {% if latest_status_update %}
 							<hr class="style-one">
 							<div class="status-update">
 								<h4>Current Status: </h4>
@@ -199,12 +199,12 @@
 									Status</a>
 								<input class="btn btn-warning mt-2" id="clear-status-btn" type="submit" value="Clear Status">
 							</div>
-							{% endif %}
-							<!-- end latest status update -->
-						</form>
+							{% endif %} -->
+				<!-- end latest status update -->
+				<!-- </form> -->
 
 
-						<form method="POST" action="" id="clear-status-form" style="display:inline-block;">
+				<!-- <form method="POST" action="" id="clear-status-form" style="display:inline-block;">
 							{% csrf_token %}
 							<input type="hidden" name="clear-status" value="true">
 						</form>
@@ -212,7 +212,7 @@
 
 
 				</div>
-				{% endif %}
+				{% endif %} -->
 				<!-- end update status form -->
 
 				<!-- Events section -->
@@ -256,13 +256,7 @@
 					</div>
 				</div>
 
-
-
-			</div>
-
-			<!-- column 3 -->
-
-			<div class="col-md">
+				<!-- end event section -->
 
 				<!-- Friends section -->
 
@@ -298,9 +292,16 @@
 
 				<!-- end friends section -->
 
+
+
+			</div>
+
+			<!-- column 3 -->
+
+			<div class="col-md">
 				<!-- profile gallery section -->
 
-				{% if user_photos %}
+				<!-- {% if user_photos %}
 				<div class="card card-body mb-2">
 					<div>
 						<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
@@ -312,7 +313,7 @@
 						{% endfor %}
 					</div>
 				</div>
-				{% endif %}
+				{% endif %} -->
 
 				<!-- end profile gallery section -->
 

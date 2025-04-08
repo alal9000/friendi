@@ -18,4 +18,9 @@ docker login
 docker tag friendi lucidlear/friendi<:version>
 docker push lucidlear/friendi<:version>
 
-# GIT
+## steps to push new image to dh:
+
+1. build the image locally under the 'friendi' image -> docker build -t friendi .
+2. login to dockerhub -> docker login
+3. map the local friendi image to a dockerhub image and tag to push to remote -> docker tag friendi lucidlear/friendi<:version>
+4. push our new remote image to docker hub -> docker push lucidlear/friendi<:version>

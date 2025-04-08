@@ -19,16 +19,16 @@ urlpatterns = [
     path("search_events", views.search_events, name="search_events"),
     path("delete-account", views_profile.delete_account, name="delete_account"),
     # newsfeed urls
-    path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
-    path("post/<int:status_id>", views_post_detail.post_detail, name="post_detail"),
-    path(
-        "react/<int:status_id>/", views_newsfeed.react_to_status, name="react_to_status"
-    ),
-    path(
-        "post_comment/<int:status_id>/",
-        views_post_detail.post_comment,
-        name="post_comment",
-    ),
+    # path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
+    # path("post/<int:status_id>", views_post_detail.post_detail, name="post_detail"),
+    # path(
+    #     "react/<int:status_id>/", views_newsfeed.react_to_status, name="react_to_status"
+    # ),
+    # path(
+    #     "post_comment/<int:status_id>/",
+    #     views_post_detail.post_comment,
+    #     name="post_comment",
+    # ),
     # all_auth urls
     path("accounts/login", CustomLoginView.as_view(), name="account_login"),
     path("accounts/signup", CustomSignupView.as_view(), name="account_signup"),
