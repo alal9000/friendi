@@ -54,7 +54,11 @@ class ProfileForm(ModelForm):
     class Meta:
         model = Profile
         fields = ("profile_pic",)
-        widgets = {"profile_pic": FileInput(attrs={"class": "form-control"})}
+        widgets = {
+            "profile_pic": FileInput(
+                attrs={"class": "form-control", "id": "profilePicInput"}
+            )
+        }
 
 
 # status update form

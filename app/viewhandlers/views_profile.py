@@ -311,3 +311,9 @@ def delete_account(request):
             "Your account and associated profile have been successfully deleted.",
         )
         return redirect("home")
+
+
+# @login_required
+# @check_profile_id
+def crop_image(request):
+    return render(request, "app/crop_image.html")

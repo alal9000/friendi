@@ -3,7 +3,7 @@ from PIL import Image
 
 
 def validate_image_size(image):
-    min_width, min_height = 150, 150
+    min_width, min_height = 300, 300
 
     # Load the image to check dimensions
     img = Image.open(image)
@@ -13,3 +13,5 @@ def validate_image_size(image):
         raise ValidationError(
             f"Image is too small. Minimum size is {min_width}x{min_height}px."
         )
+
+    image.seek(0)
