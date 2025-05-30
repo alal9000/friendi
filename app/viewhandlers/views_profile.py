@@ -315,5 +315,20 @@ def delete_account(request):
 
 # @login_required
 # @check_profile_id
-def crop_image(request):
-    return render(request, "app/crop_image.html")
+def crop_image(request, profile_id):
+    if request.method == "POST":
+        profile = request.user.profile
+        image_file = request.FILES.get("profile_pic")
+
+        if image_file:
+            profile.profile_pic = image_file
+            profile.save()
+            return redirect(
+                "profile", profile_id=profile_id
+            )  # Redirect after successful upload
+
+    context = {
+        "profile_id": profile_id,
+    }
+
+    return render(request, "app/crop_image.html", context)

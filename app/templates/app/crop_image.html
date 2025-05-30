@@ -97,7 +97,12 @@
 <div class="input-row">
   <h1>Upload and Crop Your Image</h1>
   <input type="file" id="imageInput" name="image" accept="image/*">
-  <button id="btn-crop">Save</button>
+  <form method="POST" action="{% url 'crop_image' profile_id=profile_id %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="profile_pic" id="profilePicInput">
+
+    <input class="btn btn-success" type="submit" name="profile-pic" value="update-image">
+  </form>
 </div>
 <div class="side-by-side">
   <div class="main-container">
@@ -115,7 +120,10 @@
   const imageInput = document.getElementById("imageInput");
   const image = document.getElementById("image");
   const output = document.getElementById("output");
-  let cropper; // Use a let so we can reassign
+  const hiddenInput = document.getElementById("profilePicInput");
+  const form = document.querySelector("form");
+
+  let cropper;
 
   imageInput.addEventListener("change", function (event) {
     const file = event.target.files[0];
@@ -127,7 +135,7 @@
 
       image.onload = function () {
         if (cropper) {
-          cropper.destroy(); // Remove the old cropper instance
+          cropper.destroy();
         }
 
         cropper = new Cropper(image, {
@@ -150,9 +158,45 @@
         });
       };
     };
-
     reader.readAsDataURL(file);
   });
+
+  // ✅ Handle form submit: convert cropped image to Blob and append to FormData
+  form.addEventListener("submit", function (e) {
+    e.preventDefault(); // Prevent default submit
+
+    if (!cropper) {
+      alert("Please select and crop an image first.");
+      return;
+    }
+
+    // Get the cropped canvas and convert to Blob
+    cropper.getCroppedCanvas({
+      width: 350,
+      height: 350,
+      fillColor: "#fff",
+    }).toBlob(function (blob) {
+      // Create a new FormData object and append the cropped image blob
+      const formData = new FormData();
+      formData.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
+      formData.append("profile_pic", blob, "cropped.jpg");
+
+      // Send the form data via fetch
+      fetch(form.action, {
+        method: "POST",
+        body: formData
+      }).then(response => {
+        if (response.redirected) {
+          window.location.href = response.url; // Handle Django redirect
+        } else {
+          return response.text().then(data => console.log("Upload failed", data));
+        }
+      }).catch(error => {
+        console.error("Error uploading image:", error);
+      });
+    }, "image/jpeg");
+  });
 </script>
+
 
 {% endblock %}
