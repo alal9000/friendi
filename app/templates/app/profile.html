@@ -131,15 +131,9 @@
 				</div>
 				{% if request.user.profile == profile %}
 				<!-- profile pic form -->
-				<div class="card card-body mb-2">
-					<form method="POST" action="" enctype="multipart/form-data">
-						{% csrf_token %}
-						{{profile_form.as_p}}
-
-						<input class="btn btn-success" type="submit" name="profile-pic" value="update-image">
-					</form>
+				<div class="card card-body mb-2 d-flex justify-content-center align-items-center">
 					<a href="{% url 'crop_image' profile_id=profile.id %}">
-						<button>Select Profile Picture</button>
+						<button class="btn btn-success">Select Profile Picture</button>
 					</a>
 
 				</div>

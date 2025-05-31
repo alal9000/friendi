@@ -3,7 +3,6 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image, ImageOps
-from app.validators import validate_image_size
 
 AGE_BAND_CHOICES = [
     ("rather_not_say", "Leave blank"),
@@ -19,7 +18,6 @@ class Profile(models.Model):
         default="placeholder/profile2.png",
         null=True,
         blank=True,
-        validators=[validate_image_size],
     )
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     description = models.CharField(max_length=500, null=True, blank=True)

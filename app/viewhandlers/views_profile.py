@@ -16,7 +16,6 @@ from app.decorators import check_profile_id
 from notifications.models import Notification
 from photos.models import Photo
 from app.forms import (
-    ProfileForm,
     StatusUpdateForm,
     UserUpdateForm,
     ProfileDescriptionForm,
@@ -27,6 +26,9 @@ from app.forms import (
 def profile(request, profile_id):
     profile = get_object_or_404(Profile, id=profile_id)
     current_user_profile = None
+
+    if request.GET.get("image_updated") == "true":
+        messages.success(request, "Your profile image has been successfully updated.")
 
     # Check if it's the first visit after login to send support message
     if (
@@ -119,7 +121,6 @@ def profile(request, profile_id):
     friends = Profile.objects.filter(id__in=friend_ids)[:4]
 
     # initalize forms
-    profile_form = ProfileForm(instance=profile)
     user_form = UserUpdateForm(instance=user_instance)
     description_form = ProfileDescriptionForm(instance=profile)
     status_form = StatusUpdateForm(request.POST)
@@ -132,37 +133,28 @@ def profile(request, profile_id):
 
     # handle form submissions
     if request.method == "POST":
-        print(request.POST)
-        # profile pic form
-        if "profile-pic" in request.POST:
-            profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
-            if profile_form.is_valid():
-                profile_form.save()
-                messages.success(request, "Profile picture updated successfully.")
-                return redirect("profile", profile_id=profile_id)
-        # end profile pic form
-
         # Status update form
-        if "status-update" in request.POST:
-            status_form = StatusUpdateForm(request.POST, request.FILES)
-            if status_form.is_valid():
-                status_update = status_form.save(commit=False)
-                status_update.profile = current_user_profile
+        # if "status-update" in request.POST:
+        #     status_form = StatusUpdateForm(request.POST, request.FILES)
+        #     if status_form.is_valid():
+        #         status_update = status_form.save(commit=False)
+        #         status_update.profile = current_user_profile
 
-                # Save image if uploaded
-                if "status_image" in request.FILES:
-                    status_update.image = request.FILES["status_image"]
+        #         # Save image if uploaded
+        #         if "status_image" in request.FILES:
+        #             status_update.image = request.FILES["status_image"]
 
-                status_update.save()  # Now save to DB
-                messages.success(request, "Status update posted successfully.")
-                return redirect("profile", profile_id=profile_id)
+        #         status_update.save()  # Now save to DB
+        #         messages.success(request, "Status update posted successfully.")
+        #         return redirect("profile", profile_id=profile_id)
+        # end Status update form
 
         # Clear status form
-        if "clear-status" in request.POST:
-            if latest_status_update:
-                latest_status_update.delete()
-                messages.success(request, "Status update cleared successfully.")
-            return redirect("profile", profile_id=profile_id)
+        # if "clear-status" in request.POST:
+        #     if latest_status_update:
+        #         latest_status_update.delete()
+        #         messages.success(request, "Status update cleared successfully.")
+        #     return redirect("profile", profile_id=profile_id)
         # End clear status form
 
         # friend form
@@ -227,7 +219,6 @@ def profile(request, profile_id):
 
     context = {
         "is_friend": is_friend,
-        "profile_form": profile_form,
         "status_form": status_form,
         "invite_friend_form": invite_friend_form,
         "user_form": user_form,
@@ -323,9 +314,10 @@ def crop_image(request, profile_id):
         if image_file:
             profile.profile_pic = image_file
             profile.save()
+
             return redirect(
-                "profile", profile_id=profile_id
-            )  # Redirect after successful upload
+                f"{reverse('profile', args=[profile_id])}?image_updated=true"
+            )
 
     context = {
         "profile_id": profile_id,
