@@ -1,10 +1,7 @@
-from fileinput import FileInput
-
 from django.forms import (
     ModelForm,
     TextInput,
     Textarea,
-    FileInput,
     TextInput,
     EmailInput,
     NumberInput,
@@ -47,14 +44,6 @@ class EventForm(ModelForm):
                 }
             ),
         }
-
-
-# profile pic upload
-class ProfileForm(ModelForm):
-    class Meta:
-        model = Profile
-        fields = ("profile_pic",)
-        widgets = {"profile_pic": FileInput(attrs={"class": "form-control"})}
 
 
 # status update form

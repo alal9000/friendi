@@ -18,6 +18,7 @@ urlpatterns = [
     path("terms-of-service", views.tos, name="tos"),
     path("search_events", views.search_events, name="search_events"),
     path("delete-account", views_profile.delete_account, name="delete_account"),
+    path("crop_image/<int:profile_id>", views_profile.crop_image, name="crop_image"),
     # newsfeed urls
     # path("newsfeed", views_newsfeed.newsfeed, name="newsfeed"),
     # path("post/<int:status_id>", views_post_detail.post_detail, name="post_detail"),
