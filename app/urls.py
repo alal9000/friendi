@@ -7,6 +7,7 @@ from .views import CustomSignupView, CustomLoginView
 urlpatterns = [
     path("", views.home, name="home"),
     path("about", views.about, name="about"),
+    path("get-started", views.get_started, name="start"),
     path("newsletter/signup", views.newsletter_signup, name="newsletter_signup"),
     path("thank-you", views.thank_you, name="thank-you"),
     path("recommendations", views.recommendations, name="recommendations"),

@@ -123,6 +123,10 @@ def about(request):
     return render(request, "app/about.html")
 
 
+def get_started(request):
+    return render(request, "app/get-started.html")
+
+
 def contact(request):
     return render(request, "app/contact.html")
 
