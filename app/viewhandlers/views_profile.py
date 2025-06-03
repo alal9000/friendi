@@ -87,28 +87,37 @@ def profile(request, profile_id):
     twenty_four_hours_ago_time = twenty_four_hours_ago.time()
 
     # Filter attended events
-    attended_events = Event.objects.filter(guests=profile).filter(
-        event_date__gte=twenty_four_hours_ago_date
+    attended_events = Event.objects.filter(
+        guests=profile,
+        cancelled=False,
+        event_date__gte=twenty_four_hours_ago_date,
     ).filter(
         event_date=twenty_four_hours_ago_date,
         event_time__gte=twenty_four_hours_ago_time,
     ) | Event.objects.filter(
-        guests=profile
-    ).filter(
-        event_date__gt=twenty_four_hours_ago_date
+        guests=profile,
+        cancelled=False,
+        event_date__gt=twenty_four_hours_ago_date,
     )
 
+    # Use Python to exclude expired ones
+    attended_events = [event for event in attended_events if not event.expired]
+
     # Filter hosted events
-    hosted_events = Event.objects.filter(host=profile).filter(
-        event_date__gte=twenty_four_hours_ago_date
+    hosted_events = Event.objects.filter(
+        host=profile,
+        cancelled=False,
+        event_date__gte=twenty_four_hours_ago_date,
     ).filter(
         event_date=twenty_four_hours_ago_date,
         event_time__gte=twenty_four_hours_ago_time,
     ) | Event.objects.filter(
-        host=profile
-    ).filter(
-        event_date__gt=twenty_four_hours_ago_date
+        host=profile,
+        cancelled=False,
+        event_date__gt=twenty_four_hours_ago_date,
     )
+
+    hosted_events = [event for event in hosted_events if not event.expired]
 
     # Get friends
     friends_as_sender = Friend.objects.filter(
@@ -304,8 +313,8 @@ def delete_account(request):
         return redirect("home")
 
 
-# @login_required
-# @check_profile_id
+@login_required
+@check_profile_id
 def crop_image(request, profile_id):
     if request.method == "POST":
         profile = request.user.profile

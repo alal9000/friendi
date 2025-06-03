@@ -42,6 +42,10 @@ def event(request, event_id):
     if event.cancelled:
         return render(request, "events/event_cancelled.html")
 
+    # Check if the event is expired
+    if event.expired:
+        return render(request, "events/event_expired.html")
+
     request_profile = None
     if request.user.is_authenticated:
         request_profile = request.user.profile

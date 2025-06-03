@@ -219,13 +219,13 @@
 						<h1>Events Attending</h1>
 						<ul class="list-unstyled">
 							{% for event in attended_events %}
-							{% if not event.cancelled %}
-							<li><a href="{% url 'event' event.id %}" class="text-decoration-none"><img class="avatar"
-										src="{{ event.host.profile_pic.url }}" alt="Avatar">{{ event.event_title }}</a></li>
+							<li>
+								<a href="{% url 'event' event.id %}" class="text-decoration-none">
+									<img class="avatar" src="{{ event.host.profile_pic.url }}" alt="Avatar">
+									{{ event.event_title }}
+								</a>
+							</li>
 							<hr class="style-one">
-							{% else %}
-							<li><em>No events to show</em></li>
-							{% endif %}
 							{% empty %}
 							<li><em>No events to show</em></li>
 							{% endfor %}
@@ -234,7 +234,6 @@
 						<h1 class="mt-5">Events Hosting </h1>
 						<ul class="list-unstyled">
 							{% for event in hosted_events %}
-							{% if not event.cancelled %}
 							<li>
 								<a href="{% url 'event' event.id %}" class="text-decoration-none">
 									<img class="avatar" src="{{ event.host.profile_pic.url }}" alt="Avatar">
@@ -242,7 +241,6 @@
 								</a>
 							</li>
 							<hr class="style-one">
-							{% endif %}
 							{% empty %}
 							<li><em>No events to show</em></li>
 							{% endfor %}

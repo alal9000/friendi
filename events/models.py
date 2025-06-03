@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db import models
 from app.models import Profile
 
@@ -19,6 +21,16 @@ class Event(models.Model):
 
     def __str__(self):
         return self.event_title
+
+    @property
+    def expired(self):
+        if self.event_date and self.event_time:
+            event_datetime = datetime.combine(self.event_date, self.event_time)
+            event_datetime = timezone.make_aware(
+                event_datetime, timezone.get_current_timezone()
+            )
+            return timezone.now() > (event_datetime + timedelta(hours=1))
+        return False
 
 
 class EventComment(models.Model):
