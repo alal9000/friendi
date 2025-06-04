@@ -1,8 +1,9 @@
+import logging
 from django.utils import timezone
 from datetime import timedelta, datetime
 from django.core.mail import send_mail
 from django.conf import settings
-from app.models import Event
+from events.models import Event
 
 
 def send_event_reminders():
@@ -49,3 +50,21 @@ See you there!
             recipient_list=emails,
             fail_silently=False,
         )
+
+
+def cleanup_old_events():
+    logger = logging.getLogger(__name__)
+    now = timezone.now()
+    logger.info("Running cleanup task...")
+
+    # Bulk delete cancelled events
+    cancelled_count, _ = Event.objects.filter(cancelled=True).delete()
+
+    # Collect expired event IDs to bulk delete
+    expired_event_ids = [event.id for event in Event.objects.all() if event.expired]
+    expired_count, _ = Event.objects.filter(id__in=expired_event_ids).delete()
+
+    logger.info(
+        f"Deleted {cancelled_count} cancelled events and {expired_count} expired events."
+    )
+    return {"cancelled_deleted": cancelled_count, "expired_deleted": expired_count}

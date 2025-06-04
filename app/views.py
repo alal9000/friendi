@@ -85,14 +85,19 @@ def home(request):
 def search_events(request):
     if request.method == "POST":
         searched = request.POST["searched"]
+        # Filter by search and exclude cancelled or locked
         events = Event.objects.filter(
             Q(event_title__icontains=searched)
             | Q(host__user__first_name__icontains=searched)
-            | Q(host__user__last_name__icontains=searched)
+            | Q(host__user__last_name__icontains=searched),
+            cancelled=False,
+            locked=False,
         )
 
-        context = {"searched": searched, "events": events}
+        # filter out expired events in Python using the property
+        active_events = [event for event in events if not event.expired]
 
+        context = {"searched": searched, "events": active_events}
         return render(request, "app/search_events.html", context)
     else:
         return render(request, "app/search_events.html")
