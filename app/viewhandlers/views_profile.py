@@ -16,6 +16,7 @@ from app.decorators import check_profile_id
 from notifications.models import Notification
 from photos.models import Photo
 from app.forms import (
+    ProfileUpdateForm,
     StatusUpdateForm,
     UserUpdateForm,
     ProfileDescriptionForm,
@@ -252,11 +253,14 @@ def profile_settings(request, profile_id):
     profile = get_object_or_404(Profile, id=profile_id)
     user_instance = profile.user
     user_form = UserUpdateForm(instance=user_instance)
+    profile_form = ProfileUpdateForm(instance=profile)
 
     if "user-details" in request.POST:
         user_form = UserUpdateForm(request.POST, instance=user_instance)
-        if user_form.is_valid():
+        profile_form = ProfileUpdateForm(request.POST, instance=profile)
+        if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
+            profile_form.save()
             messages.success(request, "User details updated successfully.")
             return redirect("profile_settings", profile_id=profile_id)
 
@@ -273,6 +277,7 @@ def profile_settings(request, profile_id):
     context = {
         "profile": profile,
         "user_form": user_form,
+        "profile_form": profile_form,
     }
 
     return render(request, "app/settings.html", context)

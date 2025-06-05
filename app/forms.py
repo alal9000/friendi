@@ -85,6 +85,21 @@ class UserUpdateForm(ModelForm):
         }
 
 
+# update user profile
+class ProfileUpdateForm(ModelForm):
+    class Meta:
+        model = Profile
+        fields = ["phone_number", "phone_notifications_enabled"]
+        widgets = {
+            "phone_number": forms.TextInput(
+                attrs={"placeholder": "e.g. +61412345678", "class": "form-control"}
+            ),
+            "phone_notifications_enabled": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+        }
+
+
 # profile description form
 class ProfileDescriptionForm(ModelForm):
     class Meta:

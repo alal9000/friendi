@@ -35,6 +35,7 @@
         <form method="POST" action="" enctype="multipart/form-data">
           {% csrf_token %}
           {{user_form.as_p}}
+          {{ profile_form.as_p }}
 
           <input class="btn btn-success" type="submit" name="user-details" value="update-details">
         </form>

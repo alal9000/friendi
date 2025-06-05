@@ -1,3 +1,7 @@
+from django.core.mail import send_mail
+from django.conf import settings
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioException
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
@@ -80,6 +84,44 @@ def event(request, event_id):
                         message=f'The event "{event_title}" has been cancelled.',
                         link=reverse("event", kwargs={"event_id": event.id}),
                     )
+
+                # Notify all attendees via email
+                subject = f"Event Cancelled: {event_title}"
+                message = f'The event "{event_title}" you were invited to has been cancelled by the host.'
+                from_email = settings.DEFAULT_FROM_EMAIL
+                recipient_list = [
+                    attendee.user.email for attendee in attendees if attendee.user.email
+                ]
+
+                send_mail(
+                    subject,
+                    message,
+                    from_email,
+                    recipient_list,
+                    fail_silently=False,
+                )
+
+                # Notify opted-in attendees via SMS
+                try:
+                    client = Client(
+                        settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
+                    )
+
+                    for attendee in attendees:
+                        if (
+                            attendee.phone_notifications_enabled
+                            and attendee.phone_number
+                        ):
+                            sms_message = f'The event "{event_title}" has been cancelled by the host.'
+                            client.messages.create(
+                                to=attendee.phone_number,
+                                from_=settings.TWILIO_FROM_NUMBER,
+                                body=sms_message,
+                            )
+
+                except TwilioException as e:
+                    print(f"Twilio error during cancellation SMS: {str(e)}")
+
                 messages.success(request, "Event cancelled successfully.")
                 return redirect("home")
 
@@ -100,6 +142,51 @@ def event(request, event_id):
                         message=f"{request_profile} commented in {event.event_title}",
                         link=reverse("event", kwargs={"event_id": event.pk}),
                     )
+
+            # Notify all attendees via email
+            commenter_name = str(request_profile)
+            subject = f'New comment on "{event.event_title}"'
+            message = (
+                f'{commenter_name} commented on the event "{event.event_title}".\n\n'
+                f'Comment: "{comment_text}"\n\n'
+                f'View the event: {request.build_absolute_uri(reverse("event", kwargs={"event_id": event.pk}))}'
+            )
+            from_email = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [
+                attendee.user.email
+                for attendee in attendees
+                if attendee != request_profile and attendee.user.email
+            ]
+
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
+
+            # Notify all attendees via SMS if opted in
+            try:
+                client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+                for attendee in attendees:
+                    if (
+                        attendee != request_profile
+                        and attendee.phone_notifications_enabled
+                        and attendee.phone_number
+                    ):
+                        sms_message = (
+                            f"{commenter_name} commented on '{event.event_title}':\n"
+                            f'"{comment_text}"'
+                        )
+                        client.messages.create(
+                            to=attendee.phone_number,
+                            from_=settings.TWILIO_FROM_NUMBER,
+                            body=sms_message,
+                        )
+
+            except TwilioException as e:
+                print(f"Twilio error: {str(e)}")
 
             return redirect("event", event_id=event_id)
 
