@@ -89,12 +89,19 @@ class UserUpdateForm(ModelForm):
 class ProfileUpdateForm(ModelForm):
     class Meta:
         model = Profile
-        fields = ["phone_number", "phone_notifications_enabled"]
+        fields = [
+            "phone_number",
+            "phone_notifications_enabled",
+            "email_notifications_enabled",
+        ]
         widgets = {
             "phone_number": forms.TextInput(
                 attrs={"placeholder": "e.g. +61412345678", "class": "form-control"}
             ),
             "phone_notifications_enabled": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "email_notifications_enabled": forms.CheckboxInput(
                 attrs={"class": "form-check-input"}
             ),
         }

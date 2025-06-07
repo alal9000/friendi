@@ -90,7 +90,9 @@ def event(request, event_id):
                 message = f'The event "{event_title}" you were invited to has been cancelled by the host.'
                 from_email = settings.DEFAULT_FROM_EMAIL
                 recipient_list = [
-                    attendee.user.email for attendee in attendees if attendee.user.email
+                    attendee.user.email
+                    for attendee in attendees
+                    if attendee.user.email and attendee.email_notifications_enabled
                 ]
 
                 send_mail(
@@ -155,7 +157,11 @@ def event(request, event_id):
             recipient_list = [
                 attendee.user.email
                 for attendee in attendees
-                if attendee != request_profile and attendee.user.email
+                if (
+                    attendee != request_profile
+                    and attendee.user.email
+                    and attendee.email_notifications_enabled
+                )
             ]
 
             send_mail(

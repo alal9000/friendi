@@ -49,9 +49,6 @@ def home(request):
         )
         .order_by("-date_created")
     )
-
-    print(all_events)
-
     # pagination logic
     events_per_page = 9
     paginator = Paginator(all_events, events_per_page)

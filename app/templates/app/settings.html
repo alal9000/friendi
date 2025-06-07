@@ -34,8 +34,36 @@
         <h5 class="card-title">User Details</h5>
         <form method="POST" action="" enctype="multipart/form-data">
           {% csrf_token %}
-          {{user_form.as_p}}
-          {{ profile_form.as_p }}
+
+          <!-- User form fields -->
+          <div class="mb-3">
+            {{ user_form.first_name.label_tag }}
+            {{ user_form.first_name }}
+          </div>
+          <div class="mb-3">
+            {{ user_form.last_name.label_tag }}
+            {{ user_form.last_name }}
+          </div>
+          <div class="mb-3">
+            {{ user_form.email.label_tag }}
+            {{ user_form.email }}
+          </div>
+
+          <!-- Email notifications field from profile form -->
+          <div class="form-check mb-3">
+            {{ profile_form.email_notifications_enabled }}
+            {{ profile_form.email_notifications_enabled.label_tag }}
+          </div>
+
+          <!-- Remaining profile form fields -->
+          <div class="mb-3">
+            {{ profile_form.phone_number.label_tag }}
+            {{ profile_form.phone_number }}
+          </div>
+          <div class="form-check mb-3">
+            {{ profile_form.phone_notifications_enabled }}
+            {{ profile_form.phone_notifications_enabled.label_tag }}
+          </div>
 
           <input class="btn btn-success" type="submit" name="user-details" value="update-details">
         </form>

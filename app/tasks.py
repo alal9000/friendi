@@ -39,7 +39,11 @@ def send_event_reminders():
         if event.host:
             attendees.append(event.host)
 
-        emails = [p.user.email for p in attendees if p.user and p.user.email]
+        emails = [
+            p.user.email
+            for p in attendees
+            if p.user and p.user.email and p.email_notifications_enabled
+        ]
 
         if not emails:
             continue
@@ -48,7 +52,7 @@ def send_event_reminders():
         message = f"""
             Hi there,
 
-            This is a friendly reminder that the event "{event.event_title}" is scheduled for:
+            This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
 
             📅 Date: {event.event_date}
             🕒 Time: {event.event_time.strftime('%I:%M %p')}
@@ -57,9 +61,12 @@ def send_event_reminders():
             Description:
             {event.description}
 
+            See your event here: https://friendi.com.au/events/event/{event.id}
+
             See you there!
 
-            - Your Events App
+            Thanks, 
+            Friendi Team
             """
 
         for email in emails:
@@ -77,7 +84,7 @@ def send_event_reminders():
 
             for attendee in attendees:
                 if attendee.phone_notifications_enabled and attendee.phone_number:
-                    sms_message = f"Reminder: '{event.event_title}' is tomorrow at {event.event_time.strftime('%I:%M %p')}."
+                    sms_message = f"Friendi Reminder: '{event.event_title}' is tomorrow at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
                     client.messages.create(
                         to=attendee.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,

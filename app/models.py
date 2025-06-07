@@ -21,6 +21,7 @@ class Profile(models.Model):
     )
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     phone_notifications_enabled = models.BooleanField(default=False)
+    email_notifications_enabled = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     description = models.CharField(max_length=500, null=True, blank=True)
     friend_visibility = models.BooleanField(default=True, null=True)
