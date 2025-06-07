@@ -260,7 +260,26 @@ def profile_settings(request, profile_id):
         profile_form = ProfileUpdateForm(request.POST, instance=profile)
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
-            profile_form.save()
+
+            # Manually handle phone number formatting before saving profile form
+            phone_number = profile_form.cleaned_data["phone_number"].strip()
+
+            # Ensure it starts with +61 and strip leading 0 if present
+            if phone_number and not phone_number.startswith("+61"):
+                phone_number = phone_number.lstrip("0")  # e.g. 0412... -> 412...
+                profile.phone_number = "+61" + phone_number
+            else:
+                profile.phone_number = phone_number
+
+            # Save rest of the profile form fields
+            profile.phone_notifications_enabled = profile_form.cleaned_data[
+                "phone_notifications_enabled"
+            ]
+            profile.email_notifications_enabled = profile_form.cleaned_data[
+                "email_notifications_enabled"
+            ]
+
+            profile.save()
             messages.success(request, "User details updated successfully.")
             return redirect("profile_settings", profile_id=profile_id)
 

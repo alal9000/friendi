@@ -55,11 +55,16 @@
             {{ profile_form.email_notifications_enabled.label_tag }}
           </div>
 
-          <!-- Remaining profile form fields -->
+          <!-- Custom phone number input with fixed +61 prefix -->
           <div class="mb-3">
             {{ profile_form.phone_number.label_tag }}
-            {{ profile_form.phone_number }}
+            <div class="input-group">
+              <span class="input-group-text">+61</span>
+              <input type="text" name="phone_number" class="form-control" placeholder="412345678"
+                value="{{ profile_form.phone_number.value|default:''|slice:'3:' }}">
+            </div>
           </div>
+
           <div class="form-check mb-3">
             {{ profile_form.phone_notifications_enabled }}
             {{ profile_form.phone_notifications_enabled.label_tag }}
@@ -120,6 +125,25 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var button = document.getElementById("delete-account-btn");
+    const phoneInput = document.querySelector('input[name="phone_number"]');
+    const checkbox = document.querySelector('input[name="phone_notifications_enabled"]');
+
+    if (phoneInput && checkbox) {
+      phoneInput.addEventListener("input", function () {
+        // Get only digits from input
+        let digitsOnly = phoneInput.value.replace(/\D/g, "");
+
+        // Update the input field with cleaned number
+        phoneInput.value = digitsOnly;
+
+        // Auto-check or uncheck checkbox based on digit count
+        if (digitsOnly.length >= 9) {
+          checkbox.checked = true;
+        } else if (digitsOnly.length === 0) {
+          checkbox.checked = false;
+        }
+      });
+    }
 
     button.addEventListener("click", function () {
       document.getElementById('delete-account-form').submit();
