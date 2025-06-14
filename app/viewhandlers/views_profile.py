@@ -28,6 +28,12 @@ def profile(request, profile_id):
     profile = get_object_or_404(Profile, id=profile_id)
     current_user_profile = None
 
+    is_first_visit = False
+    if request.user.is_authenticated and request.user.profile == profile:
+        if not request.session.get("has_visited_profile"):
+            request.session["has_visited_profile"] = True
+            is_first_visit = True
+
     if request.GET.get("image_updated") == "true":
         messages.success(request, "Your profile image has been successfully updated.")
 
@@ -206,7 +212,7 @@ def profile(request, profile_id):
                 # Send an email invitation
                 message = (
                     f"Hi, <a href='https://friendi.com.au/accounts/profile/{request.user.profile.id}'>{request.user.first_name} {request.user.last_name}</a> "
-                    "has invited you to join Friendi. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
+                    "has invited you to join Friendi. Make new friends and get out and about. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
                 )
                 send_mail(
                     "Invitation to Friendi",
@@ -239,6 +245,7 @@ def profile(request, profile_id):
         "friends": friends,
         "friend_visibility": friend_visibility,
         "button": button,
+        "is_first_visit": is_first_visit,
         "description_form": description_form,
         "success_message": success_message,
         "latest_status_update": latest_status_update,

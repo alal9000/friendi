@@ -3,6 +3,13 @@
 {% load account %}
 {% load static %}
 
+{% if is_first_visit %}
+<!-- tourguide tags -->
+<script src="https://unpkg.com/@sjmc11/tourguidejs/dist/tour.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+</script>
+<link rel="stylesheet" href="https://unpkg.com/@sjmc11/tourguidejs/dist/css/tour.min.css">
+{% endif %}
+
 <style>
 	.profile-pic {
 		width: 200px;
@@ -113,7 +120,10 @@
 					{% endif %}
 					{% else %}
 					<!-- user settings link -->
-					<a href="{% url 'profile_settings' profile.id %}" class="btn btn-warning w-100 mt-2">User settings</a>
+					<a href="{% url 'profile_settings' profile.id %}" class="btn btn-warning w-100 mt-2"
+						data-tg-tour='<h5>Profile Settings</h5><p>Adjust your personal settings here such as your name, email address, sms and email notification preferences.</p>'
+						data-tg-order="1">User
+						settings</a>
 					{% endif %}
 					<hr class="style-one" />
 					<h3 style="text-align: center">
@@ -133,14 +143,18 @@
 				<!-- profile pic form -->
 				<div class="card card-body mb-2 d-flex justify-content-center align-items-center">
 					<a href="{% url 'crop_image' profile_id=profile.id %}">
-						<button class="btn btn-success">Select Profile Picture</button>
+						<button class="btn btn-success"
+							data-tg-tour="<h5>👋 Let's take a quick tour of your profile</h5><p>Get started by uploading a profile picture. Bigger, high resolution images are better.</p>"
+							data-tg-order="0">Select Profile Picture</button>
 					</a>
 
 				</div>
 
 
 				<!-- profile description -->
-				<div class="card card-body mb-2">
+				<div class="card card-body mb-2"
+					data-tg-tour="<h5>Enter some info about yourself</h5> <p>A quick sentence or two, age band and hit the 'Update About' button.</p>"
+					data-tg-order="3">
 					<form method="POST" action="">
 						{% csrf_token %}
 						{{ description_form.as_p }}
@@ -214,7 +228,9 @@
 
 				<!-- Events section -->
 
-				<div class="card card-body mb-2">
+				<div class="card card-body mb-2"
+					data-tg-tour="<h5>All your event details are here.</h5> <p>What events you are attending or hosting. Click the 'Event Requests' button to see your event requests.</p>"
+					data-tg-order="4">
 					<div>
 						<h1>Events Attending</h1>
 						<ul class="list-unstyled">
@@ -255,7 +271,9 @@
 
 				<!-- Friends section -->
 
-				<div class="card card-body mb-2">
+				<div class="card card-body mb-2"
+					data-tg-tour="<h5>Here are your friends.</h5> <p>Click the link to see your friend list or click the 'Friend Requests' button to see your friend requests.</p>"
+					data-tg-order="5">
 					<div>
 						<a class="mb-3 d-inline-block text-decoration-none" href="{% url 'friends' profile.id %}">
 							<h1>Friends {% if friends.count > 0 and friend_visibility %} ({{ friends.count }}) {% endif %}</h1>
@@ -380,7 +398,7 @@
 
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
-		const clearStatusBtn = document.getElementById("clear-status-btn");
+		/* const clearStatusBtn = document.getElementById("clear-status-btn");
 		const clearStatusForm = document.getElementById("clear-status-form");
 
 		if (clearStatusBtn && clearStatusForm) {
@@ -388,7 +406,15 @@
 				event.preventDefault();
 				clearStatusForm.submit();
 			});
-		}
+		} */
+
+		const tg = new tourguide.TourGuideClient({
+			exitOnClickOutside: false,
+		})
+
+		tg.start();
+
+
 	});
 </script>
 
