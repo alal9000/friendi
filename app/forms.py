@@ -167,7 +167,6 @@ class FriendVisibilityForm(forms.ModelForm):
 
 
 # user signup
-@ratelimit(key="ip", rate="5/m", block=True)
 class CustomSignupForm(SignupForm):
 
     first_name = forms.CharField(max_length=50, label="First Name")
@@ -196,7 +195,6 @@ class CustomSignupForm(SignupForm):
 
 
 # user login
-@ratelimit(key="ip", rate="5/m", block=True)
 class CustomLoginForm(LoginForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

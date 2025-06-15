@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.messages import get_messages
+from allauth.account.models import EmailAddress
+from allauth.account.utils import send_email_confirmation
 
 from app.models import Profile, StatusUpdate
 from events.models import Event
@@ -178,6 +180,22 @@ def profile(request, profile_id):
             if not request.user.is_authenticated:
                 return redirect(reverse("account_login"))
             if request.POST["friend-button"] == "Add":
+
+                # Check if the user's email is verified
+                email_address = EmailAddress.objects.filter(
+                    user=request.user, email=request.user.email
+                ).first()
+
+                if not email_address or not email_address.verified:
+                    # resend verification email
+                    send_email_confirmation(request, request.user)
+
+                    messages.warning(
+                        request,
+                        "Your email is not verified. A verification link has been sent to your email address. Please verify your email to send friend requests.",
+                    )
+                    return redirect("home")
+
                 button = "Pending"
                 if not Friend.objects.filter(
                     sender=current_user_profile, receiver=profile, status="pending"

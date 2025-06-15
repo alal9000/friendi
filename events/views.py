@@ -12,10 +12,27 @@ from .models import Event, EventComment, EventRequest
 from app.decorators import check_profile_id
 from app.forms import EventForm
 from notifications.models import Notification
+from allauth.account.models import EmailAddress
+from allauth.account.utils import send_email_confirmation
+from django.shortcuts import redirect
 
 
 @login_required
 def create(request):
+    # Check email verification status
+    email_address = EmailAddress.objects.filter(
+        user=request.user, email=request.user.email
+    ).first()
+
+    if not email_address or not email_address.verified:
+        send_email_confirmation(request, request.user)
+        messages.warning(
+            request,
+            "Your email is not verified. A new verification link has been sent to your email address."
+            "Please verify your email to create an event.",
+        )
+        return redirect("home")
+
     current_user_profile = request.user.profile
     form = EventForm()
 
@@ -200,6 +217,23 @@ def event(request, event_id):
         if "join-event" in data and not is_host:
             if not request.user.is_authenticated:
                 return redirect(reverse("account_login"))
+
+            # Check email verification
+            email_address = EmailAddress.objects.filter(
+                user=request.user, email=request.user.email
+            ).first()
+
+            if not email_address or not email_address.verified:
+                # send confirmation email again
+                send_email_confirmation(request, request.user)
+
+                messages.warning(
+                    request,
+                    "Your email is not verified. A verification link has been sent to your email address. Please verify your email to join events.",
+                )
+                return redirect("home")
+
+            # create the join request
             EventRequest.objects.create(
                 sender=request_profile, event=event, host=event.host
             )
