@@ -17,6 +17,7 @@ from .forms import (
 )
 from events.models import Event
 from django.contrib.auth.models import User
+from django_ratelimit.decorators import ratelimit
 
 
 # function based views
@@ -158,6 +159,7 @@ def tos(request):
 
 
 # class based views
+@ratelimit(key="ip", rate="5/m", block=True)
 class CustomSignupView(SignupView):
     form_class = CustomSignupForm
     template_name = "account/signup.html"
@@ -181,6 +183,7 @@ class CustomSignupView(SignupView):
         return response
 
 
+@ratelimit(key="ip", rate="5/m", block=True)
 class CustomLoginView(LoginView):
     form_class = CustomLoginForm
     template_name = "account/login.html"
