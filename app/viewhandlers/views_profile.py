@@ -32,9 +32,11 @@ def profile(request, profile_id):
 
     is_first_visit = False
     if request.user.is_authenticated and request.user.profile == profile:
-        if not request.session.get("has_visited_profile"):
-            request.session["has_visited_profile"] = True
+        user_profile = request.user.profile
+        if not user_profile.has_seen_tour:
             is_first_visit = True
+            user_profile.has_seen_tour = True
+            user_profile.save()
 
     if request.GET.get("image_updated") == "true":
         messages.success(request, "Your profile image has been successfully updated.")

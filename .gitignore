@@ -1,11 +1,11 @@
 *.log
 *.pot
 *.pyc
+.env*
 __pycache__/
 venv/
 static/
 node_modules/
-settings.py
 node_modules/
 create.html
 event.html

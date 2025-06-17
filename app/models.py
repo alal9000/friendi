@@ -25,6 +25,7 @@ class Profile(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     description = models.CharField(max_length=500, null=True, blank=True)
     friend_visibility = models.BooleanField(default=True, null=True)
+    has_seen_tour = models.BooleanField(default=False)
     age_band = models.CharField(
         max_length=20,
         choices=AGE_BAND_CHOICES,
