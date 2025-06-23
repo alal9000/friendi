@@ -39,14 +39,32 @@
           <div class="mb-3">
             {{ user_form.first_name.label_tag }}
             {{ user_form.first_name }}
+
+            {% if user_form.first_name.errors %}
+            <div class="text-danger">
+              {{ user_form.first_name.errors }}
+            </div>
+            {% endif %}
           </div>
           <div class="mb-3">
             {{ user_form.last_name.label_tag }}
             {{ user_form.last_name }}
+
+            {% if user_form.last_name.errors %}
+            <div class="text-danger">
+              {{ user_form.last_name.errors }}
+            </div>
+            {% endif %}
           </div>
           <div class="mb-3">
             {{ user_form.email.label_tag }}
             {{ user_form.email }}
+
+            {% if user_form.email.errors %}
+            <div class="text-danger">
+              {{ user_form.email.errors }}
+            </div>
+            {% endif %}
           </div>
 
           <!-- Email notifications field from profile form -->

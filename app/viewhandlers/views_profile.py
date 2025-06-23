@@ -284,8 +284,11 @@ def profile_settings(request, profile_id):
 
     if "user-details" in request.POST:
         user_form = UserUpdateForm(request.POST, instance=user_instance)
+
         profile_form = ProfileUpdateForm(request.POST, instance=profile)
+
         if user_form.is_valid() and profile_form.is_valid():
+            print("is_valid()", user_form.is_valid())
             user_form.save()
 
             # Manually handle phone number formatting before saving profile form
@@ -309,7 +312,8 @@ def profile_settings(request, profile_id):
             profile.save()
             messages.success(request, "User details updated successfully.")
             return redirect("profile_settings", profile_id=profile_id)
-
+        else:
+            print("is_valid()", user_form.is_valid())
     if "friend_visibility" in request.POST:
         if request.POST["friend_visibility"] == "hide":
             profile.friend_visibility = False
