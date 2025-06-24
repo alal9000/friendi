@@ -232,7 +232,7 @@ def profile(request, profile_id):
                 # Send an email invitation
                 message = (
                     f"Hi, <a href='https://friendi.com.au/accounts/profile/{request.user.profile.id}'>{request.user.first_name} {request.user.last_name}</a> "
-                    "has invited you to join Friendi. Make new friends and get out and about. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
+                    "has invited you to join Friendi. Make new friends and attend events in Sydney. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
                 )
                 send_mail(
                     "Invitation to Friendi",
