@@ -16,16 +16,18 @@ import environ
 
 # Load the appropriate .env file
 env = environ.Env()
-DJANGO_ENV = os.environ.get("DJANGO_ENV", "development").lower()
+if os.environ.get("DJANGO_ENV") != "production":
+    env.read_env(".env.development")  # Fallback for local development
+# DJANGO_ENV = os.environ.get("DJANGO_ENV", "development").lower()
 
-if DJANGO_ENV == "production":
-    env_file = ".env.production"
-    print("In production")
-else:
-    env_file = ".env.development"
-    print("In development")
+# if DJANGO_ENV == "production":
+#     env_file = ".env.production"
+#     print("In production")
+# else:
+#     env_file = ".env.development"
+#     print("In development")
 
-env.read_env(env_file)
+# env.read_env()
 
 # End load the appropriate .env file
 

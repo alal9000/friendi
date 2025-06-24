@@ -104,3 +104,7 @@ def cleanup_old_events():
     expired_count, _ = Event.objects.filter(id__in=expired_event_ids).delete()
 
     return {"cancelled_deleted": cancelled_count, "expired_deleted": expired_count}
+
+
+def test_print():
+    print("Django-Q scheduler test: task executed!")
