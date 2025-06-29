@@ -121,9 +121,6 @@ class ProfileUpdateForm(ModelForm):
             "email_notifications_enabled",
         ]
         widgets = {
-            "phone_number": forms.TextInput(
-                attrs={"placeholder": "e.g. 412345678", "class": "form-control"}
-            ),
             "phone_notifications_enabled": forms.CheckboxInput(
                 attrs={"class": "form-check-input"}
             ),

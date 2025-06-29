@@ -2,9 +2,16 @@ FROM python:3.10-slim-buster
 
 WORKDIR /app
 
+# Install netcat for the Redis check
+RUN apt-get update && apt-get install -y netcat && apt-get clean
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "manage.py", "qcluster"]
+# Give execute permission to the launch script
+RUN chmod +x launch.sh
+
+# Run the launch script instead of calling qcluster directly
+CMD ["./launch.sh"]

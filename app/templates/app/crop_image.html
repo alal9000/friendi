@@ -248,7 +248,9 @@
         body: formData
       }).then(response => {
         if (response.redirected) {
-          window.location.href = response.url; // Handle Django redirect
+          setTimeout(() => {
+            window.location.href = response.url;
+          }, 1000); // Show animation for 2 seconds before redirect
         } else {
           return response.text().then(data => console.log("Upload failed", data));
         }
