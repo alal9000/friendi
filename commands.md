@@ -20,7 +20,7 @@ docker push lucidlear/friendi<:version>
 
 ## steps to push new image to dh(app):
 
-1. build the image locally under the 'friendi' image -> docker build -t friendi .
+1. build the image locally under the 'friendi' image -> docker build -f Dockerfile.web -t friendi .
 2. login to dockerhub -> docker login
 3. map the local friendi image to a dockerhub image and tag to push to remote -> docker tag friendi lucidlear/friendi<:version>
 4. push our new remote image to docker hub -> docker push lucidlear/friendi<:version>
