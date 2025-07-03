@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import os
 from pathlib import Path
+from socket import gethostbyname
+from socket import gethostname
 import environ
 
 # Load the appropriate .env file
@@ -57,6 +59,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost"])
+ALLOWED_HOSTS.append(gethostbyname(gethostname()))
 
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",

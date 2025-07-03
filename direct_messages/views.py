@@ -9,6 +9,17 @@ from .models import Message, Conversation, ConversationStatus
 from app.decorators import check_profile_id
 from app.models import Profile
 from notifications.models import Notification
+from friends.models import Friend
+
+
+def are_friends(profile1, profile2):
+    return Friend.objects.filter(
+        (
+            (Q(sender=profile1) & Q(receiver=profile2))
+            | (Q(sender=profile2) & Q(receiver=profile1))
+        )
+        & Q(status="accepted")
+    ).exists()
 
 
 @login_required
@@ -34,7 +45,7 @@ def direct_messages(request, profile_id):
     # Filter out conversations that have a status with deleted=True for the current profile
     deleted_conversations = ConversationStatus.objects.filter(
         profile=current_profile, deleted=True
-    ).values_list('conversation', flat=True)
+    ).values_list("conversation", flat=True)
 
     conversations = all_conversations.exclude(id__in=deleted_conversations).distinct()
 
@@ -64,13 +75,6 @@ def send_message(request, profile_id):
     message_text = request.POST.get("message")
 
     if message_text:
-        Message.objects.create(
-            sender=sender_profile,
-            receiver=receiver_profile,
-            message=message_text,
-            timestamp=timezone.now(),
-        )
-
         # Check if a conversation already exists between these participants
         conversation = (
             Conversation.objects.filter(participants=sender_profile)
@@ -82,6 +86,18 @@ def send_message(request, profile_id):
         if not conversation:
             conversation = Conversation.objects.create()
             conversation.participants.add(sender_profile, receiver_profile)
+
+        message = Message.objects.create(
+            conversation=conversation,
+            sender=sender_profile,
+            receiver=receiver_profile,
+            message=message_text,
+            timestamp=timezone.now(),
+        )
+
+        # Update the last_message pointer (optional but matches your model)
+        conversation.last_message = message
+        conversation.save()
 
         # Update or create the ConversationStatus for the receiver to mark as not deleted
         receiver_status, created = ConversationStatus.objects.get_or_create(
@@ -111,6 +127,11 @@ def conversation_view(request, sender_id, receiver_id):
     if request.user.profile.pk == int(receiver_id):
         sender_profile = get_object_or_404(Profile, id=sender_id)
         receiver_profile = get_object_or_404(Profile, id=receiver_id)
+
+        # Check if sender and receiver are friends
+        if not are_friends(sender_profile, receiver_profile):
+            messages.error(request, "You must be friends to view this conversation.")
+            return redirect("home")
 
         messages_sent_by_sender = Message.objects.filter(
             sender=sender_profile, receiver=receiver_profile

@@ -6,9 +6,10 @@ from django.http import HttpResponseForbidden
 
 from app.decorators import check_profile_id
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+from direct_messages.models import Conversation
 from .models import Friend
-from notifications.models import Notification 
+from notifications.models import Notification
 from app.models import Profile
 
 
@@ -31,12 +32,24 @@ def friends(request, profile_id):
 
         friend_id = request.POST.get("friend_id")
         friend_profile = get_object_or_404(Profile, id=friend_id)
+
+        # Remove the friendship
         Friend.objects.filter(
-            Q(sender=profile, receiver=friend_profile) |
-            Q(sender=friend_profile, receiver=profile)
+            Q(sender=profile, receiver=friend_profile)
+            | Q(sender=friend_profile, receiver=profile)
         ).delete()
+
+        # Remove the conversation between them if it exists
+        conversation = (
+            Conversation.objects.filter(participants=profile)
+            .filter(participants=friend_profile)
+            .first()
+        )
+        if conversation:
+            conversation.delete()  # deletes conversation and auto-cascades messages
+
         messages.success(request, "Friend removed successfully")
-        return redirect('friends', profile_id=profile_id)
+        return redirect("friends", profile_id=profile_id)
     # end unfriend
 
     return render(
@@ -62,10 +75,10 @@ def friend_requests(request, profile_id):
                 friend_request.save()
 
                 Notification.objects.create(
-                        user=friend_request.sender,
-                        message=f"Your friend request to {friend_request.receiver} was accepted",
-                        link=reverse("profile", args=[request.user.profile.id]),
-                    )
+                    user=friend_request.sender,
+                    message=f"Your friend request to {friend_request.receiver} was accepted",
+                    link=reverse("profile", args=[request.user.profile.id]),
+                )
                 messages.success(request, "Friend request approved.")
             elif action == "deny":
                 friend_request.status = "denied"

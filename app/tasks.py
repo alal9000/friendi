@@ -8,6 +8,7 @@ from twilio.base.exceptions import TwilioException
 
 
 def send_event_reminders():
+    print("send_event_reminders ran")
     now = timezone.now()
     tomorrow = now + timedelta(days=1)
 
@@ -96,6 +97,7 @@ def send_event_reminders():
 
 
 def cleanup_old_events():
+    print("cleanup_old_events ran")
     # Bulk delete cancelled events
     cancelled_count, _ = Event.objects.filter(cancelled=True).delete()
 
