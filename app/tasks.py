@@ -4,11 +4,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from events.models import Event
 from twilio.rest import Client
+import logging
 from twilio.base.exceptions import TwilioException
 
 
 def send_event_reminders():
-    print("send_event_reminders ran")
+    logger = logging.getLogger(__name__)
+    logger.info("send_event_reminders ran")
     now = timezone.now()
     tomorrow = now + timedelta(days=1)
 
@@ -26,6 +28,10 @@ def send_event_reminders():
     )
 
     for event in events:
+        logger.info(
+            f"Checking event: {event.event_title} ({event.event_date} at {event.event_time})"
+        )
+
         # Re-implement the "expired" logic in Python
         event_datetime = datetime.combine(event.event_date, event.event_time)
         event_datetime = timezone.make_aware(
@@ -33,12 +39,15 @@ def send_event_reminders():
         )
 
         if timezone.now() > (event_datetime + timedelta(hours=1)):
-            continue  # skip expired
+            logger.info(f"Skipping expired event: {event.event_title}")
+            continue
 
-        # email reminders
+        # Email reminders
         attendees = list(event.guests.all())
         if event.host:
             attendees.append(event.host)
+
+        logger.info(f"Number of attendees: {len(attendees)}")
 
         emails = [
             p.user.email
@@ -46,29 +55,32 @@ def send_event_reminders():
             if p.user and p.user.email and p.email_notifications_enabled
         ]
 
+        logger.info(f"Emails found: {emails}")
+
         if not emails:
+            logger.info(f"No email-enabled attendees for event: {event.event_title}")
             continue
 
         subject = f"Reminder: '{event.event_title}' is happening tomorrow!"
         message = f"""
-            Hi there,
+Hi there,
 
-            This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
+This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
 
-            📅 Date: {event.event_date}
-            🕒 Time: {event.event_time.strftime('%I:%M %p')}
-            📍 Location: {event.location or 'No location provided'}
+📅 Date: {event.event_date}
+🕒 Time: {event.event_time.strftime('%I:%M %p')}
+📍 Location: {event.location or 'No location provided'}
 
-            Description:
-            {event.description}
+Description:
+{event.description}
 
-            See your event here: https://friendi.com.au/events/event/{event.id}
+See your event here: https://friendi.com.au/events/event/{event.id}
 
-            See you there!
+See you there!
 
-            Thanks, 
-            Friendi Team
-            """
+Thanks, 
+Friendi Team
+"""
 
         for email in emails:
             send_mail(
@@ -91,9 +103,8 @@ def send_event_reminders():
                         from_=settings.TWILIO_FROM_NUMBER,
                         body=sms_message,
                     )
-
         except TwilioException as e:
-            print(f"Twilio error during reminder SMS: {str(e)}")
+            logger.exception("Twilio error during reminder SMS")
 
 
 def cleanup_old_events():
