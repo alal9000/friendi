@@ -362,6 +362,16 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
+        "django_q": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
         "events": {  # Replace with your actual app name if needed
             "handlers": ["console"],
             "level": "INFO",

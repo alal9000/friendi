@@ -61,7 +61,7 @@ def send_event_reminders():
             logger.info(f"No email-enabled attendees for event: {event.event_title}")
             continue
 
-        subject = f"Reminder: '{event.event_title}' is happening tomorrow!"
+        subject = f"A Friendi Reminder: '{event.event_title}' is happening soon!"
         message = f"""
 Hi there,
 
@@ -97,7 +97,7 @@ Friendi Team
 
             for attendee in attendees:
                 if attendee.phone_notifications_enabled and attendee.phone_number:
-                    sms_message = f"Friendi Reminder: '{event.event_title}' is tomorrow at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
+                    sms_message = f"From Friendi: This is a Friendi Reminder, '{event.event_title}' is happening soon at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
                     client.messages.create(
                         to=attendee.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,
@@ -108,7 +108,8 @@ Friendi Team
 
 
 def cleanup_old_events():
-    print("cleanup_old_events ran")
+    logger = logging.getLogger(__name__)
+    logger.info("cleanup_old_events ran")
     # Bulk delete cancelled events
     cancelled_count, _ = Event.objects.filter(cancelled=True).delete()
 

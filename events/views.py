@@ -40,6 +40,11 @@ def create(request):
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
+            # Hosting limit check
+            if current_user_profile.active_hosted_events_count() >= 3:
+                messages.error(request, "You can only host up to 3 upcoming events.")
+                return redirect("home")
+
             new_event = form.save(commit=False)
             if current_user_profile:
                 new_event.event_title = " ".join(
@@ -199,7 +204,7 @@ def event(request, event_id):
                         and attendee.phone_number
                     ):
                         sms_message = (
-                            f"{commenter_name} commented on '{event.event_title}':\n"
+                            f"From Friendi: {commenter_name} commented on '{event.event_title}':\n"
                             f'"{comment_text}"'
                         )
                         client.messages.create(
@@ -230,6 +235,13 @@ def event(request, event_id):
                 messages.warning(
                     request,
                     "Your email is not verified. A verification link has been sent to your email address. Please verify your email to join events.",
+                )
+                return redirect("home")
+
+            # Limit user to only attend up to 3 future events
+            if request_profile.active_attending_events_count() >= 3:
+                messages.error(
+                    request, "You can only attend up to 3 upcoming events at a time."
                 )
                 return redirect("home")
 

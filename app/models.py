@@ -1,3 +1,4 @@
+from datetime import timezone
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.db import models
@@ -36,6 +37,16 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
+
+    def active_hosted_events_count(self):
+        """Count future non-cancelled events this user is hosting."""
+        now = timezone.now().date()
+        return self.event_host.filter(cancelled=False, event_date__gte=now).count()
+
+    def active_attending_events_count(self):
+        """Count future non-cancelled events this user is attending as guest."""
+        now = timezone.now().date()
+        return self.event_guests.filter(cancelled=False, event_date__gte=now).count()
 
     # Resize the profile picture to 350x350 px
     def save(self, *args, **kwargs):
