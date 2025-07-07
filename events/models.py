@@ -13,7 +13,13 @@ class Event(models.Model):
     event_date = models.DateField(null=True, blank=False)
     event_time = models.TimeField(null=True, blank=False)
     description = models.TextField()
-    host = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    host = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="event_host",
+    )
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     guests = models.ManyToManyField(Profile, related_name="attended_events", blank=True)
     cancelled = models.BooleanField(default=False)
