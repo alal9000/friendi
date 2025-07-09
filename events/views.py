@@ -62,6 +62,7 @@ def create(request):
 
 
 def event(request, event_id):
+
     event = get_object_or_404(Event, id=event_id)
 
     # Check if the event is canceled
@@ -260,7 +261,7 @@ def event(request, event_id):
 
             # Check if the event should be locked
             total_current_attendees = event.guests.count() + 1
-            if total_current_attendees == event.total_attendees - 1:
+            if total_current_attendees >= event.total_attendees - 1:
                 event.locked = True
                 event.save()
 
