@@ -6,6 +6,7 @@ from events.models import Event
 from twilio.rest import Client
 import logging
 from twilio.base.exceptions import TwilioException
+from django.db.models import Count, F, IntegerField, Value, ExpressionWrapper
 
 
 def send_event_reminders():
@@ -20,14 +21,29 @@ def send_event_reminders():
     tomorrow_start = timezone.make_aware(tomorrow_start)
     tomorrow_end = timezone.make_aware(tomorrow_end)
 
-    # Find all events happening tomorrow that are not cancelled and are locked
-    events = Event.objects.filter(
-        cancelled=False,
-        locked=True,
-        event_date=tomorrow.date(),
+    # Find all events happening tomorrow that are full (guests + 1 == total_attendees)
+    events = (
+        Event.objects.filter(
+            cancelled=False,
+            event_date__in=[now.date(), tomorrow.date()],
+            total_attendees__isnull=False,
+            host__isnull=False,
+        )
+        .annotate(
+            guest_count=Count("guests", distinct=True),
+            attendee_count=ExpressionWrapper(
+                Count("guests", distinct=True) + Value(1), output_field=IntegerField()
+            ),
+        )
+        .filter(attendee_count=F("total_attendees"))
     )
 
+    print(f"Found {events.count()} full events for tomorrow:")
+
     for event in events:
+        print(
+            f"→ {event.event_title} (ID: {event.id}) with {event.guest_count} guests + host (total={event.total_attendees})"
+        )
         logger.info(
             f"Checking event: {event.event_title} ({event.event_date} at {event.event_time})"
         )
@@ -38,7 +54,7 @@ def send_event_reminders():
             event_datetime, timezone.get_current_timezone()
         )
 
-        if timezone.now() > (event_datetime + timedelta(hours=1)):
+        if timezone.now() > event_datetime:
             logger.info(f"Skipping expired event: {event.event_title}")
             continue
 
