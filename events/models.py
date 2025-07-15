@@ -38,6 +38,21 @@ class Event(models.Model):
             return timezone.now() > (event_datetime + timedelta(hours=1))
         return False
 
+    @property
+    def available_guest_slots(self):
+        return max(self.total_attendees - 1 - self.guests.count(), 0)
+
+    @property
+    def pending_guest_requests(self):
+        return self.event_requests.filter(status="pending").count()
+
+    @property
+    def is_fully_booked_or_locked(self):
+        return (
+            self.locked
+            or (self.available_guest_slots - self.pending_guest_requests) <= 0
+        )
+
 
 class EventComment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)

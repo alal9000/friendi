@@ -246,6 +246,11 @@ def event(request, event_id):
                 )
                 return redirect("home")
 
+            # dont send the event request if its full or pending requests equal total guests
+            if event.is_fully_booked_or_locked:
+                messages.warning(request, "This event is no longer accepting requests.")
+                return redirect("event", event_id=event.id)
+
             # create the join request
             EventRequest.objects.create(
                 sender=request_profile, event=event, host=event.host
@@ -253,15 +258,14 @@ def event(request, event_id):
 
             Notification.objects.create(
                 user=event.host,
-                message=f"{request.user.first_name} has requested to join your event",
+                message=f"request received to join your event",
                 link=reverse("event_requests", kwargs={"profile_id": event.host.id}),
             )
 
             messages.success(request, "Your request to join the event has been sent.")
 
             # Check if the event should be locked
-            total_current_attendees = event.guests.count() + 1
-            if total_current_attendees >= event.total_attendees - 1:
+            if event.available_guest_slots - event.pending_guest_requests <= 0:
                 event.locked = True
                 event.save()
 
@@ -327,6 +331,11 @@ def event_requests(request, profile_id):
             event.guests.add(event_request.sender)
             event_request.save()
 
+            # lock event if its full
+            if event.available_guest_slots == 0:
+                event.locked = True
+                event.save()
+
             Notification.objects.create(
                 user=event_request.sender,
                 message=f"Your request to join {event.event_title} has been approved",
@@ -338,9 +347,11 @@ def event_requests(request, profile_id):
             event_request.status = "denied"
             event_request.save()
 
-            # Check if the event is currently locked and needs to be unlocked
-            total_current_attendees = event.guests.count() + 1
-            if event.locked and total_current_attendees < event.total_attendees:
+            # Check if locking can be lifted
+            if (
+                event.locked
+                and event.available_guest_slots - event.pending_guest_requests > 0
+            ):
                 event.locked = False
                 event.save()
 
