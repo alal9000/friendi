@@ -206,7 +206,8 @@ def event(request, event_id):
                     ):
                         sms_message = (
                             f"From Friendi: {commenter_name} commented on '{event.event_title}':\n"
-                            f'"{comment_text}"'
+                            f'"{comment_text}"\n'
+                            f"See your event here: https://friendi.com.au/events/event/{event.id}"
                         )
                         client.messages.create(
                             to=attendee.phone_number,

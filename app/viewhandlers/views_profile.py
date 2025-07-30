@@ -44,6 +44,7 @@ def profile(request, profile_id):
     # Check if it's the first visit after login to send support message
     if (
         request.user.is_authenticated
+        and request.user.profile == profile
         and "profile_support_message_shown" not in request.session
     ):
         messages.success(

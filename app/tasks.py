@@ -13,19 +13,12 @@ def send_event_reminders():
     logger = logging.getLogger(__name__)
     logger.info("send_event_reminders ran")
     now = timezone.now()
-    tomorrow = now + timedelta(days=1)
 
-    # Get tomorrow's date range
-    tomorrow_start = datetime.combine(tomorrow.date(), datetime.min.time())
-    tomorrow_end = datetime.combine(tomorrow.date(), datetime.max.time())
-    tomorrow_start = timezone.make_aware(tomorrow_start)
-    tomorrow_end = timezone.make_aware(tomorrow_end)
-
-    # Find all events happening tomorrow that are full (guests + 1 == total_attendees)
+    # Find all events happening today that are full
     events = (
         Event.objects.filter(
             cancelled=False,
-            event_date__in=[now.date(), tomorrow.date()],
+            event_date=now.date(),
             total_attendees__isnull=False,
             host__isnull=False,
         )
@@ -38,7 +31,7 @@ def send_event_reminders():
         .filter(attendee_count=F("total_attendees"))
     )
 
-    print(f"Found {events.count()} full events for tomorrow:")
+    print(f"Found {events.count()} full events for today:")
 
     for event in events:
         print(
