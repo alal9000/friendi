@@ -13,6 +13,7 @@ def send_event_reminders():
     logger = logging.getLogger(__name__)
     logger.info("send_event_reminders ran")
     now = timezone.now()
+    logger.info(f"today: {now.date()}")
 
     # Find all events happening today that are full
     events = (

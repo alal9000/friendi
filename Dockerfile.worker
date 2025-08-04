@@ -5,6 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# Set container timezone to Australia/Sydney
+RUN ln -snf /usr/share/zoneinfo/Australia/Sydney /etc/localtime && echo "Australia/Sydney" > /etc/timezone
+
 COPY . .
 
 CMD ["python", "manage.py", "qcluster"]
