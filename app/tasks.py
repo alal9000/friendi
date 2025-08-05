@@ -12,14 +12,14 @@ from django.db.models import Count, F, IntegerField, Value, ExpressionWrapper
 def send_event_reminders():
     logger = logging.getLogger(__name__)
     logger.info("send_event_reminders ran")
-    now = timezone.now()
-    logger.info(f"today: {now.date()}")
+    today = timezone.localdate()
+    logger.info(f"today (AEST): {today}")
 
     # Find all events happening today that are full
     events = (
         Event.objects.filter(
             cancelled=False,
-            event_date=now.date(),
+            event_date=today,
             total_attendees__isnull=False,
             host__isnull=False,
         )
@@ -32,12 +32,9 @@ def send_event_reminders():
         .filter(attendee_count=F("total_attendees"))
     )
 
-    print(f"Found {events.count()} full events for today:")
+    logger.info(f"Found {events.count()} full events for today:")
 
     for event in events:
-        print(
-            f"→ {event.event_title} (ID: {event.id}) with {event.guest_count} guests + host (total={event.total_attendees})"
-        )
         logger.info(
             f"Checking event: {event.event_title} ({event.event_date} at {event.event_time})"
         )
@@ -58,6 +55,8 @@ def send_event_reminders():
             attendees.append(event.host)
 
         logger.info(f"Number of attendees: {len(attendees)}")
+
+        logger.info(f"Reminders sent for event: {event.event_title}")
 
         emails = [
             p.user.email
@@ -115,6 +114,8 @@ Friendi Team
                     )
         except TwilioException as e:
             logger.exception("Twilio error during reminder SMS")
+
+        logger.info(f"Reminders sent for event: {event.event_title}")
 
 
 def cleanup_old_events():
