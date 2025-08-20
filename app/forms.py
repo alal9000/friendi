@@ -26,6 +26,26 @@ from events.models import Event
 
 # create event
 class EventForm(ModelForm):
+    total_attendees = forms.IntegerField(
+        required=True,
+        min_value=1,
+        max_value=50,
+        widget=NumberInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Number of attendees inc host",
+                "required": "true",
+                "min": 1,
+                "max": 50,
+            }
+        ),
+        error_messages={
+            "required": "Please enter the total number of attendees.",
+            "min_value": "Attendees must be at least 1.",
+            "max_value": "Attendees cannot exceed 50.",
+        },
+    )
+
     class Meta:
         model = Event
         fields = "__all__"
@@ -41,12 +61,6 @@ class EventForm(ModelForm):
             ),
             "event_title": TextInput(
                 attrs={"class": "form-control", "placeholder": "Name for your event"}
-            ),
-            "total_attendees": NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Number of attendees inc host",
-                }
             ),
         }
 

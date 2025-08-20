@@ -79,8 +79,21 @@
         <form id="newsletter-form" class="input-group news-input mw-50" style="max-width: 600px;"
           action="{% url 'newsletter_signup' %}" method="post">
           {% csrf_token %}
-          <input type="text" name="name" class="form-control" placeholder="Name..." />
-          <input type="text" name="email" class="form-control" placeholder="Email..." />
+
+          {% if error %}
+          <div class="alert alert-danger w-100 mb-2" role="alert">
+            {{ error }}
+          </div>
+          {% endif %}
+
+          <!-- Name -->
+          <input type="text" name="name" class="form-control" placeholder="Name..."
+            title="Name can only contain letters, spaces, hyphens, and commas." value="{{ name|default:'' }}" />
+
+          <!-- Email -->
+          <input type="email" name="email" class="form-control" placeholder="Email..."
+            title="Please enter a valid email address." value="{{ email|default:'' }}" />
+
           <button type="submit" class="btn btn-warning">Sign Up</button>
         </form>
       </div>

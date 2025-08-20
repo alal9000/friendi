@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from app.models import Profile
-from .models import Event, EventComment, EventRequest
+from .models import Event, EventComment, EventRequest, Recommendation
 from app.decorators import check_profile_id
 from app.forms import EventForm
 from notifications.models import Notification
@@ -39,6 +39,12 @@ def create(request):
     # create event form
     if request.method == "POST":
         form = EventForm(request.POST)
+        location = request.POST.get("location", "").strip()
+
+        if not location:
+            messages.error(request, "Please enter a location for your event.")
+            return render(request, "events/create.html", {"form": form})
+
         if form.is_valid():
             # Hosting limit check
             if current_user_profile.active_hosted_events_count() >= 3:
@@ -58,7 +64,14 @@ def create(request):
             else:
                 messages.error(request, "Error creating event. User profile not found.")
 
-    return render(request, "events/create.html", {"form": form})
+    # get recommendations from DB
+    recommendations = list(Recommendation.objects.all().values("name", "address"))
+
+    return render(
+        request,
+        "events/create.html",
+        {"form": form, "recommendations": recommendations},
+    )
 
 
 def event(request, event_id):
@@ -110,7 +123,7 @@ def event(request, event_id):
 
                 # Notify all attendees via email
                 subject = f"Event Cancelled: {event_title}"
-                message = f'The event "{event_title}" you were invited to has been cancelled by the host.'
+                message = f'The event "{event_title}" has been cancelled by the host.'
                 from_email = settings.DEFAULT_FROM_EMAIL
                 recipient_list = [
                     attendee.user.email

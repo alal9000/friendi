@@ -293,7 +293,7 @@ def profile_settings(request, profile_id):
             user_form.save()
 
             # Manually handle phone number formatting before saving profile form
-            phone_number = profile_form.cleaned_data["phone_number"].strip()
+            phone_number = (profile_form.cleaned_data["phone_number"] or "").strip()
 
             # Ensure it starts with +61 and strip leading 0 if present
             if phone_number and not phone_number.startswith("+61"):

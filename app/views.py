@@ -1,3 +1,6 @@
+import re
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.text import capfirst
 from django.shortcuts import render
@@ -104,8 +107,36 @@ def search_events(request):
 
 def newsletter_signup(request):
     if request.method == "POST":
-        name = request.POST.get("name")
-        email = request.POST.get("email")
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+
+        # Validate name: only letters, spaces, commas, hyphens allowed
+        if not name:
+            error = "Name cannot be blank."
+            return render(
+                request,
+                "app/main.html",
+                {"error": error, "name": name, "email": email},
+            )
+
+        if not re.match(r"^[A-Za-z ,\-]+$", name):
+            error = "Name can only contain letters, spaces, commas, and hyphens."
+            return render(
+                request,
+                "app/main.html",
+                {"error": error, "name": name, "email": email},
+            )
+
+        # Validate email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            error = "Please enter a valid email address."
+            return render(
+                request,
+                "app/main.html",
+                {"error": error, "name": name, "email": email},
+            )
 
         if User.objects.filter(email=email).exists():
             return render(

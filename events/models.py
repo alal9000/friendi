@@ -4,6 +4,15 @@ from django.db import models
 from app.models import Profile
 
 
+class Recommendation(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=500)
+    website = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Event(models.Model):
     event_title = models.CharField(max_length=300)
     total_attendees = models.IntegerField(null=True, blank=True)
