@@ -1,3 +1,4 @@
+import json
 from django.core.mail import send_mail
 from django.conf import settings
 from twilio.rest import Client
@@ -65,12 +66,12 @@ def create(request):
                 messages.error(request, "Error creating event. User profile not found.")
 
     # get recommendations from DB
-    recommendations = list(Recommendation.objects.all().values("name", "address"))
+    recommendations = list(Recommendation.objects.all().values_list("name", flat=True))
 
     return render(
         request,
         "events/create.html",
-        {"form": form, "recommendations": recommendations},
+        {"form": form, "recommendations": json.dumps(recommendations)},
     )
 
 
