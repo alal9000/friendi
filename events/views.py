@@ -105,64 +105,6 @@ def event(request, event_id):
 
     if request.method == "POST":
         data = request.POST
-        # cancel event
-        if "host-cancel" in data:
-            if is_host:
-                event.cancelled = True
-                event.save()
-
-                attendees = [event.host] + list(event.guests.all())
-                event_title = event.event_title
-
-                # Notify all attendees
-                for attendee in attendees:
-                    Notification.objects.create(
-                        user=attendee,
-                        message=f'The event "{event_title}" has been cancelled.',
-                        link=reverse("event", kwargs={"event_id": event.id}),
-                    )
-
-                # Notify all attendees via email
-                subject = f"Event Cancelled: {event_title}"
-                message = f'The event "{event_title}" has been cancelled by the host.'
-                from_email = settings.DEFAULT_FROM_EMAIL
-                recipient_list = [
-                    attendee.user.email
-                    for attendee in attendees
-                    if attendee.user.email and attendee.email_notifications_enabled
-                ]
-
-                send_mail(
-                    subject,
-                    message,
-                    from_email,
-                    recipient_list,
-                    fail_silently=False,
-                )
-
-                # Notify opted-in attendees via SMS
-                try:
-                    client = Client(
-                        settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
-                    )
-
-                    for attendee in attendees:
-                        if (
-                            attendee.phone_notifications_enabled
-                            and attendee.phone_number
-                        ):
-                            sms_message = f'The event "{event_title}" has been cancelled by the host.'
-                            client.messages.create(
-                                to=attendee.phone_number,
-                                from_=settings.TWILIO_FROM_NUMBER,
-                                body=sms_message,
-                            )
-
-                except TwilioException as e:
-                    print(f"Twilio error during cancellation SMS: {str(e)}")
-
-                messages.success(request, "Event cancelled successfully.")
-                return redirect("home")
 
         # comment
         if is_guest or is_host:
@@ -184,30 +126,30 @@ def event(request, event_id):
 
             # Notify all attendees via email
             commenter_name = str(request_profile)
-            subject = f'New comment on "{event.event_title}"'
-            message = (
-                f'{commenter_name} commented on the event "{event.event_title}".\n\n'
-                f'Comment: "{comment_text}"\n\n'
-                f'View the event: {request.build_absolute_uri(reverse("event", kwargs={"event_id": event.pk}))}'
-            )
-            from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [
-                attendee.user.email
-                for attendee in attendees
-                if (
-                    attendee != request_profile
-                    and attendee.user.email
-                    and attendee.email_notifications_enabled
-                )
-            ]
+            # subject = f'New comment on "{event.event_title}"'
+            # message = (
+            #     f'{commenter_name} commented on the event "{event.event_title}".\n\n'
+            #     f'Comment: "{comment_text}"\n\n'
+            #     f'View the event: {request.build_absolute_uri(reverse("event", kwargs={"event_id": event.pk}))}'
+            # )
+            # from_email = settings.DEFAULT_FROM_EMAIL
+            # recipient_list = [
+            #     attendee.user.email
+            #     for attendee in attendees
+            #     if (
+            #         attendee != request_profile
+            #         and attendee.user.email
+            #         and attendee.email_notifications_enabled
+            #     )
+            # ]
 
-            send_mail(
-                subject,
-                message,
-                from_email,
-                recipient_list,
-                fail_silently=False,
-            )
+            # send_mail(
+            #     subject,
+            #     message,
+            #     from_email,
+            #     recipient_list,
+            #     fail_silently=False,
+            # )
 
             # Notify all attendees via SMS if opted in
             try:
@@ -301,6 +243,67 @@ def event(request, event_id):
     }
 
     return render(request, "events/event.html", context)
+
+
+@login_required
+def cancel_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    request_profile = request.user.profile
+
+    # Check permission: only host can cancel
+    if event.host != request_profile:
+        messages.error(request, "You don't have permission to cancel this event.")
+        return redirect("event", event_id=event.id)
+
+    if request.method == "POST":
+        event.cancelled = True
+        event.save()
+
+        attendees = [event.host] + list(event.guests.all())
+        event_title = event.event_title
+
+        # Notify all attendees (in-app)
+        for attendee in attendees:
+            Notification.objects.create(
+                user=attendee,
+                message=f'The event "{event_title}" has been cancelled.',
+                link=reverse("event", kwargs={"event_id": event.id}),
+            )
+
+        # Notify via email
+        subject = f"Event Cancelled: {event_title}"
+        message = f'The event "{event_title}" has been cancelled by the host.'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [
+            attendee.user.email
+            for attendee in attendees
+            if attendee.user.email and attendee.email_notifications_enabled
+        ]
+        if recipient_list:
+            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+
+        # Notify via SMS
+        try:
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            for attendee in attendees:
+                if attendee.phone_notifications_enabled and attendee.phone_number:
+                    sms_message = (
+                        f'The event "{event_title}" has been cancelled by the host.'
+                    )
+                    client.messages.create(
+                        to=attendee.phone_number,
+                        from_=settings.TWILIO_FROM_NUMBER,
+                        body=sms_message,
+                    )
+
+        except TwilioException as e:
+            print(f"Twilio error during cancellation SMS: {str(e)}")
+
+        messages.success(request, "Event cancelled successfully.")
+        return redirect("home")
+
+    # If GET (e.g., direct URL visit)
+    return redirect("event", event_id=event.id)
 
 
 @login_required
