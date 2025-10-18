@@ -109,8 +109,20 @@ def event(request, event_id):
         # comment
         if is_guest or is_host:
             comment_text = request.POST.get("comment_text")
+            comment_image = request.FILES.get("comment_image")
+
+            # Validate file type if present
+            if comment_image:
+                valid_types = ["image/jpeg", "image/png"]
+                if comment_image.content_type not in valid_types:
+                    messages.error(request, "Only JPG and PNG images are allowed.")
+                    return redirect("event", event_id=event_id)
+
             EventComment.objects.create(
-                profile=request_profile, event=event, comment=comment_text
+                profile=request_profile,
+                event=event,
+                comment=comment_text,
+                image=comment_image if comment_image else None,
             )
             messages.success(request, "Your message has been posted successfully.")
 

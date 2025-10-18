@@ -67,6 +67,7 @@ class EventComment(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     comment = models.TextField()
+    image = models.ImageField(upload_to="comment_images/", blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
 
     def __str__(self):
