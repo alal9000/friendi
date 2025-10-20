@@ -58,7 +58,19 @@ def direct_messages(request, profile_id):
         for conversation in conversations
     ]
 
+    # collect friends to pass to template
+    friends_as_sender = Friend.objects.filter(
+        sender=current_profile, status="accepted"
+    ).values_list("receiver", flat=True)
+    friends_as_receiver = Friend.objects.filter(
+        receiver=current_profile, status="accepted"
+    ).values_list("sender", flat=True)
+
+    friend_ids = list(friends_as_sender) + list(friends_as_receiver)
+    friends = Profile.objects.filter(id__in=friend_ids)
+
     context = {
+        "friends": friends,
         "conversations_data": conversations_data,
         "current_profile": current_profile,
     }
@@ -95,7 +107,7 @@ def send_message(request, profile_id):
             timestamp=timezone.now(),
         )
 
-        # Update the last_message pointer (optional but matches your model)
+        # Update the last_message pointer
         conversation.last_message = message
         conversation.save()
 
@@ -199,3 +211,50 @@ def conversation_view(request, sender_id, receiver_id):
         )
     else:
         return redirect("home")
+
+
+@login_required
+@check_profile_id
+def new_message(request, profile_id):
+    current_profile = get_object_or_404(Profile, id=profile_id)
+
+    if request.method == "POST":
+        recipient_id = request.POST.get("recipient_id")
+        message_text = request.POST.get("message")
+
+        if not recipient_id or not message_text.strip():
+            messages.error(request, "Please select a friend and enter a message.")
+            return redirect(reverse("messages", args=[profile_id]))
+
+        recipient = get_object_or_404(Profile, id=recipient_id)
+
+        # Check if conversation already exists
+        conversation = (
+            Conversation.objects.filter(participants=current_profile)
+            .filter(participants=recipient)
+            .first()
+        )
+
+        if not conversation:
+            conversation = Conversation.objects.create()
+            conversation.participants.add(current_profile, recipient)
+
+        # Create message
+        Message.objects.create(
+            conversation=conversation,
+            sender=current_profile,
+            receiver=recipient,
+            message=message_text,
+            timestamp=timezone.now(),
+        )
+
+        Notification.objects.create(
+            user=recipient,
+            message=f"You have a new message from {current_profile}",
+            link=f"/direct_messages/conversation/{current_profile.id}/{recipient.id}/",
+        )
+        messages.success(request, "Message sent successfully.")
+
+        return redirect(reverse("messages", args=[profile_id]))
+
+    return redirect(reverse("messages", args=[profile_id]))

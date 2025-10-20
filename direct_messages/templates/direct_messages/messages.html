@@ -1,6 +1,11 @@
 {% extends "app/main.html" %} {% block content %}
 
 <style>
+  #friend-list {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
   #chat-area-messages {
     flex: 1;
     box-sizing: border-box;
@@ -44,8 +49,17 @@
     {% endif %}
     <div class="row">
       <div class="col">
-        <section class="mb-5">
+        <!-- header -->
+
+        <!-- new message button -->
+        <section class="mb-4 d-flex justify-content-between align-items-center">
           <h1>Messages</h1>
+          <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+            New Message +
+          </button>
+        </section>
+
+        <section class="mb-5">
           <h3>Search conversations</h3>
           <input type="text" id="search-input" class="form-control w-50 p-2 rounded border border-grey mb-2"
             placeholder="Name..." />
@@ -68,7 +82,7 @@
                 <form method="post" action="" class="delete-form">
                   {% csrf_token %}
                   <input type="hidden" name="conversation_id" value="{{ conversation_data.conversation.id }}">
-                  <button type="button" class="btn btn-danger delete-btn" data-bs-toggle="modal"
+                  <button type="button" class="btn btn-warning delete-btn" data-bs-toggle="modal"
                     data-bs-target="#confirmDeleteModal">
                     Delete
                   </button>
@@ -91,7 +105,7 @@
   </div>
 </section>
 
-<!-- Modal -->
+<!-- Modal to delete conversation -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
   aria-hidden="true">
   <div class="modal-dialog">
@@ -111,12 +125,88 @@
   </div>
 </div>
 
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="newMessageModalLabel">Message</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{% url 'new_message' current_profile.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="text" id="friend-search" class="form-control mb-3" placeholder="Search friends...">
+
+          <ul id="friend-list" class="list-group mb-3">
+            {% for friend in friends %}
+            <li class="list-group-item friend-item" data-id="{{ friend.id }}">
+              <img src="{{ friend.profile_pic.url }}" class="avatar me-2">
+              {{ friend }}
+            </li>
+            {% empty %}
+            <li class="list-group-item"><em>You have no friends to message.</em></li>
+            {% endfor %}
+          </ul>
+
+          <div id="message-area" class="d-none">
+            <label for="message" class="form-label">Your Message:</label>
+            <textarea name="message" id="message" class="form-control" rows="3"
+              placeholder="Type your message..."></textarea>
+            <input type="hidden" name="recipient_id" id="recipient-id">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success d-none" id="send-message-btn">Send Message</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     // elements to confirm conversation delete 
     let deleteFormToSubmit = null;
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+    // live friend search
+    const searchInputNewMsg = document.getElementById('friend-search');
+    const friendItems = document.querySelectorAll('.friend-item');
+    const messageArea = document.getElementById('message-area');
+    const recipientIdInput = document.getElementById('recipient-id');
+    const sendBtn = document.getElementById('send-message-btn');
+
+    // Filter friends by name as you type
+    searchInputNewMsg.addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      friendItems.forEach(item => {
+        const name = item.textContent.toLowerCase();
+        item.style.display = name.includes(query) ? '' : 'none';
+      });
+    });
+
+    // When clicking a friend, select them
+    friendItems.forEach(item => {
+      item.addEventListener('click', function () {
+        friendItems.forEach(f => f.classList.remove('active'));
+        this.classList.add('active');
+
+        const friendName = this.textContent.trim();
+        const friendId = this.dataset.id;
+
+        recipientIdInput.value = friendId;
+        messageArea.classList.remove('d-none');
+        sendBtn.classList.remove('d-none');
+
+        searchInputNewMsg.value = friendName;
+      });
+    });
 
     // Capture which delete button was clicked
     document.querySelectorAll('.delete-btn').forEach(button => {
