@@ -56,21 +56,26 @@
             <h3 class="mb-3">Conversations:</h3>
             <ul class="p-0 list-unstyled">
               {% for conversation_data in conversations_data %}
-                {% if conversation_data.other_participant %}
-                  <li class="conversation-item">
-                    <a href="{% url 'conversation' conversation_data.other_participant.id current_profile.id %}" class="text-decoration-none message-link">
-                      <p class="username">
-                        <img class="avatar" src="{{ conversation_data.other_participant.profile_pic.url }}" alt="">{{ conversation_data.other_participant }}
-                      </p>
-                    </a>
-                    <form method="post" action="" class="delete-form">
-                      {% csrf_token %}
-                      <input type="hidden" name="conversation_id" value="{{ conversation_data.conversation.id }}">
-                      <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-                    <hr class="style-one">
-                  </li>
-                {% endif %}
+              {% if conversation_data.other_participant %}
+              <li class="conversation-item">
+                <a href="{% url 'conversation' conversation_data.other_participant.id current_profile.id %}"
+                  class="text-decoration-none message-link">
+                  <p class="username">
+                    <img class="avatar" src="{{ conversation_data.other_participant.profile_pic.url }}"
+                      alt="">{{ conversation_data.other_participant }}
+                  </p>
+                </a>
+                <form method="post" action="" class="delete-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="conversation_id" value="{{ conversation_data.conversation.id }}">
+                  <button type="button" class="btn btn-danger delete-btn" data-bs-toggle="modal"
+                    data-bs-target="#confirmDeleteModal">
+                    Delete
+                  </button>
+                </form>
+                <hr class="style-one">
+              </li>
+              {% endif %}
               {% endfor %}
 
               {% if conversations_data|length == 0 %}
@@ -86,9 +91,46 @@
   </div>
 </section>
 
+<!-- Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="confirmDeleteModalLabel">Confirm Deletion</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this conversation? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // elements to confirm conversation delete 
+    let deleteFormToSubmit = null;
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+    // Capture which delete button was clicked
+    document.querySelectorAll('.delete-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        deleteFormToSubmit = this.closest('form'); // remember the form tied to this delete
+      });
+    });
+
+    // When confirm button is clicked in modal, submit form
+    confirmDeleteBtn.addEventListener('click', function () {
+      if (deleteFormToSubmit) {
+        deleteFormToSubmit.submit();
+      }
+    });
 
     function filterMessages() {
       var input = document.getElementById('search-input').value.toLowerCase();
