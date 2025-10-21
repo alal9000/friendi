@@ -62,6 +62,9 @@ class EventForm(ModelForm):
             "event_title": TextInput(
                 attrs={"class": "form-control", "placeholder": "Name for your event"}
             ),
+            "host_phone_number": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "e.g: 0412345678"}
+            ),
         }
 
 

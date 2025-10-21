@@ -22,6 +22,11 @@ class Event(models.Model):
     event_date = models.DateField(null=True, blank=False)
     event_time = models.TimeField(null=True, blank=False)
     description = models.TextField()
+    host_phone_number = models.CharField(
+        max_length=20,
+        verbose_name="Host Mobile Number",
+        help_text="Guests can use this number to contact the host for this event.",
+    )
     host = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,

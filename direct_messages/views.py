@@ -40,7 +40,9 @@ def direct_messages(request, profile_id):
             messages.success(request, "Conversation deleted successfully.")
             return redirect(reverse("messages", args=[profile_id]))
 
-    all_conversations = Conversation.objects.filter(participants=current_profile)
+    all_conversations = Conversation.objects.filter(
+        participants=current_profile
+    ).order_by("-last_message__timestamp")
 
     # Filter out conversations that have a status with deleted=True for the current profile
     deleted_conversations = ConversationStatus.objects.filter(
@@ -111,13 +113,13 @@ def send_message(request, profile_id):
         conversation.last_message = message
         conversation.save()
 
-        # Update or create the ConversationStatus for the receiver to mark as not deleted
-        receiver_status, created = ConversationStatus.objects.get_or_create(
-            conversation=conversation,
-            profile=receiver_profile,
-        )
-        receiver_status.deleted = False
-        receiver_status.save()
+        # Ensure the conversation appears in both users' message lists
+        for profile in [sender_profile, receiver_profile]:
+            status, created = ConversationStatus.objects.get_or_create(
+                conversation=conversation, profile=profile
+            )
+            status.deleted = False
+            status.save()
 
         Notification.objects.create(
             user=receiver_profile,
@@ -240,7 +242,7 @@ def new_message(request, profile_id):
             conversation.participants.add(current_profile, recipient)
 
         # Create message
-        Message.objects.create(
+        message = Message.objects.create(
             conversation=conversation,
             sender=current_profile,
             receiver=recipient,
@@ -248,13 +250,25 @@ def new_message(request, profile_id):
             timestamp=timezone.now(),
         )
 
+        # Update the last message pointer
+        conversation.last_message = message
+        conversation.save()
+
+        # Ensure the conversation appears in both users' lists
+        for profile in [current_profile, recipient]:
+            status, created = ConversationStatus.objects.get_or_create(
+                conversation=conversation, profile=profile
+            )
+            status.deleted = False
+            status.save()
+
+        # notify the recipient
         Notification.objects.create(
             user=recipient,
             message=f"You have a new message from {current_profile}",
             link=f"/direct_messages/conversation/{current_profile.id}/{recipient.id}/",
         )
         messages.success(request, "Message sent successfully.")
-
         return redirect(reverse("messages", args=[profile_id]))
 
     return redirect(reverse("messages", args=[profile_id]))

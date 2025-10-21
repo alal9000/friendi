@@ -78,8 +78,8 @@
             {{ profile_form.phone_number.label_tag }}
             <div class="input-group">
               <span class="input-group-text">+61</span>
-              <input type="text" name="phone_number" class="form-control" placeholder="" minlength="9" maxlength="10"
-                pattern="\d{9,10}" title="Enter 9 or 10 digits including 0"
+              <input type="text" name="phone_number" class="form-control" placeholder="e.g: 0412345678" minlength="9"
+                maxlength="10" pattern="\d{9,10}" title="Enter 9 or 10 digits including 0"
                 value="{{ profile_form.phone_number.value|default:''|slice:'3:' }}">
             </div>
           </div>
