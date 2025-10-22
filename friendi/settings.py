@@ -313,7 +313,7 @@ ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-# ACCOUNT_ADAPTER = "app.adapters.MyAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "app.adapters.MySocialAccountAdapter"
 # ACCOUNT_USER_MODEL_USERNAME_FIELD = None (causes problems with unique usernames during the signup process)
 
 # SOCIAL ACCOUNT SETTINGS

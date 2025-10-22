@@ -53,6 +53,14 @@ def create(request):
                 return redirect("home")
 
             new_event = form.save(commit=False)
+
+            # clean host phone number
+            phone_number = (form.cleaned_data.get("host_phone_number") or "").strip()
+            digits_only = "".join(filter(str.isdigit, phone_number))
+            if digits_only and not digits_only.startswith("0"):
+                digits_only = "0" + digits_only
+            new_event.host_phone_number = digits_only
+
             if current_user_profile:
                 new_event.event_title = " ".join(
                     word.capitalize() for word in new_event.event_title.split()
