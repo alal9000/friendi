@@ -69,7 +69,7 @@ def profile(request, profile_id):
     ):
         is_friend = True
 
-    user_photos = Photo.objects.filter(profile=profile).order_by("-timestamp")[:2]
+    user_photos = profile.gallery_photos.all()[:4]
     user_instance = profile.user
     friend_visibility = profile.friend_visibility
 
@@ -177,6 +177,14 @@ def profile(request, profile_id):
         #         messages.success(request, "Status update cleared successfully.")
         #     return redirect("profile", profile_id=profile_id)
         # End clear status form
+
+        if request.user.profile == profile:
+            for i in range(4):  # or however many boxes
+                file_key = f"image_{i}"
+                if request.FILES.get(file_key):
+                    Photo.objects.create(profile=profile, image=request.FILES[file_key])
+                    messages.success(request, "Photo uploaded successfully!")
+                    return redirect("profile", profile_id=profile_id)
 
         # friend form
         if "friend-button" in request.POST:

@@ -1,17 +1,19 @@
 from django.db import models
 from app.models import Profile, StatusUpdate
+from django.utils import timezone
 
 # Create your models here.
 
 
 class Photo(models.Model):
-    image = models.ImageField(null=False, blank=False)
-    description = models.TextField()
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
-    status = models.ForeignKey(
-        StatusUpdate, on_delete=models.SET_NULL, null=True, blank=True
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="gallery_photos"
     )
-    timestamp = models.DateTimeField(auto_now_add=True, null=True)
+    image = models.ImageField(upload_to="profile_gallery/")
+    uploaded_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
 
     def __str__(self):
-        return self.description
+        return f"{self.profile.user.username}'s Photo"
