@@ -27,28 +27,6 @@
 		object-fit: cover;
 	}
 
-	.gallery {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-	}
-
-	.gallery-item {
-		flex: 50px 50px 50px 50px;
-		/* Adjust the width of each column as needed */
-		margin-bottom: 20px;
-		background-color: brown;
-	}
-
-	.gallery-item img {
-		max-width: 100%;
-		height: auto;
-	}
-
-	.profile-albums {
-		max-width: 45%;
-	}
-
 	hr.style-one {
 		border: 0;
 		height: 1px;
@@ -56,30 +34,39 @@
 		background-image: linear-gradient(to right, #ccc, #333, #ccc);
 	}
 
-	.placeholder-italic::placeholder {
-		font-style: italic;
+	/* status post styles
+.placeholder-italic::placeholder {
+	font-style: italic;
+}
+
+#datetime {
+	font-size: 0.9em;
+	color: #666;
+}
+
+#status-container {
+	border: 1px solid #d3d3d3;
+	border-radius: 8px;
+	padding: 16px;
+	background-color: #f9f9f9;
+}
+*/
+
+
+	/* user photo gallery */
+	.gallery-grid {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
 	}
 
-	#datetime {
-		font-size: 0.9em;
-		color: #666;
-	}
-
-	#status-container {
-		border: 1px solid #d3d3d3;
-		border-radius: 8px;
-		padding: 16px;
-		background-color: #f9f9f9;
-	}
-
-	/* photo rectangles */
 	.add-photo-box {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 180px;
+		width: 160px;
 		/* Portrait aspect ratio */
-		height: 240px;
+		height: 220px;
 		border: 2px dashed #bbb;
 		border-radius: 12px;
 		cursor: pointer;
@@ -101,6 +88,13 @@
 
 	.add-photo-box:hover .plus-sign {
 		color: #28a745;
+	}
+
+	.gallery-grid label img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 12px;
 	}
 </style>
 
@@ -350,15 +344,13 @@
 					{% if request.user.profile == profile %}
 					<form method="post" enctype="multipart/form-data" class="mt-3">
 						{% csrf_token %}
-						<input type="file" name="image" id="photo-upload" accept="image/*" style="display: none;">
 
-						<div class="gallery-grid" style="display: flex; gap: 10px; flex-wrap: wrap;">
+						<div class="gallery-grid">
 							<!-- Box 1 -->
 							<input type="file" name="image_0" id="photo-upload-0" accept="image/*" style="display:none;">
 							<label for="photo-upload-0" class="add-photo-box">
 								{% if user_photos|length > 0 %}
-								<img src="{{ user_photos.0.image.url }}"
-									style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+								<img src="{{ user_photos.0.image.url }}">
 								{% else %}
 								<span class="plus-sign">+</span>
 								{% endif %}
@@ -368,8 +360,7 @@
 							<input type="file" name="image_1" id="photo-upload-1" accept="image/*" style="display:none;">
 							<label for="photo-upload-1" class="add-photo-box">
 								{% if user_photos|length > 1 %}
-								<img src="{{ user_photos.1.image.url }}"
-									style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+								<img src="{{ user_photos.1.image.url }}">
 								{% else %}
 								<span class="plus-sign">+</span>
 								{% endif %}
@@ -379,8 +370,7 @@
 							<input type="file" name="image_2" id="photo-upload-2" accept="image/*" style="display:none;">
 							<label for="photo-upload-2" class="add-photo-box">
 								{% if user_photos|length > 2 %}
-								<img src="{{ user_photos.2.image.url }}"
-									style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+								<img src="{{ user_photos.2.image.url }}">
 								{% else %}
 								<span class="plus-sign">+</span>
 								{% endif %}
@@ -390,8 +380,7 @@
 							<input type="file" name="image_3" id="photo-upload-3" accept="image/*" style="display:none;">
 							<label for="photo-upload-3" class="add-photo-box">
 								{% if user_photos|length > 3 %}
-								<img src="{{ user_photos.3.image.url }}"
-									style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+								<img src="{{ user_photos.3.image.url }}">
 								{% else %}
 								<span class="plus-sign">+</span>
 								{% endif %}
@@ -491,14 +480,52 @@
 
 </section>
 
+<div id="galleryLoadingOverlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none;
+">
+	<canvas id="gallery-dotlottie-canvas" style="width: 300px; height: 300px;"></canvas>
+</div>
+
+<script type="module">
+	import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
+  window.DotLottie = DotLottie; // make it global
+</script>
+
+
+
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
 		const photoInputs = document.querySelectorAll('input[type="file"][id^="photo-upload-"]');
 
 		photoInputs.forEach(input => {
 			input.addEventListener("change", function () {
-				if (this.files && this.files[0]) {
-					this.form.submit();
+				if (this.files[0]) {
+					// Show loading overlay
+					const overlay = document.getElementById("galleryLoadingOverlay");
+					overlay.style.display = "flex";
+
+					// Play Lottie animation
+					const dotLottie = new window.DotLottie({
+						autoplay: true,
+						loop: true,
+						canvas: document.getElementById("gallery-dotlottie-canvas"),
+						src: "https://lottie.host/047bfc54-8fe2-42d2-9631-ac15e86e346b/c4UbKclfSF.lottie", // replace with your Lottie
+					});
+
+					// Submit the form after short delay
+					setTimeout(() => {
+						this.form.submit();
+					}, 1000); // 0.8s gives time for the animation
 				}
 			});
 		});

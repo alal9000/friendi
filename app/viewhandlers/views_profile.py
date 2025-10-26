@@ -69,7 +69,10 @@ def profile(request, profile_id):
     ):
         is_friend = True
 
+    # get gallery images
     user_photos = profile.gallery_photos.all()[:4]
+    # end gallery images
+
     user_instance = profile.user
     friend_visibility = profile.friend_visibility
 
@@ -178,12 +181,26 @@ def profile(request, profile_id):
         #     return redirect("profile", profile_id=profile_id)
         # End clear status form
 
+        # handle gallery image uploads
         if request.user.profile == profile:
             for i in range(4):  # or however many boxes
                 file_key = f"image_{i}"
                 if request.FILES.get(file_key):
-                    Photo.objects.create(profile=profile, image=request.FILES[file_key])
-                    messages.success(request, "Photo uploaded successfully!")
+                    # Get existing photos ordered by upload date DESC
+                    existing_photos = list(profile.gallery_photos.all())
+
+                    # If this slot already exists, replace it
+                    if i < len(existing_photos):
+                        existing_photo = existing_photos[i]
+                        existing_photo.image = request.FILES[file_key]
+                        existing_photo.save()
+                    else:
+                        # Otherwise, create a new photo
+                        Photo.objects.create(
+                            profile=profile, image=request.FILES[file_key]
+                        )
+
+                    messages.success(request, "Photo updated successfully!")
                     return redirect("profile", profile_id=profile_id)
 
         # friend form

@@ -10,7 +10,7 @@ class Photo(models.Model):
         Profile, on_delete=models.CASCADE, related_name="gallery_photos"
     )
     image = models.ImageField(upload_to="profile_gallery/")
-    uploaded_at = models.DateTimeField(default=timezone.now)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-uploaded_at"]
