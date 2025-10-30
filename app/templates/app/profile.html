@@ -338,7 +338,9 @@
 
 			<div class="col-md">
 				<!-- profile gallery section -->
-				<div class="card card-body mb-2">
+				<div class="card card-body mb-2"
+					data-tg-tour="<h5>Here are your gallery images.</h5> <p>Add up to four images to your profile so people can see your photos. Lets get started! 🎉</p>"
+					data-tg-order="6">
 					<h1>{{ profile.user.first_name }}'s Gallery</h1>
 
 					{% if request.user.profile == profile %}
@@ -525,7 +527,7 @@
 					// Submit the form after short delay
 					setTimeout(() => {
 						this.form.submit();
-					}, 1000); // 0.8s gives time for the animation
+					}, 800); // 0.8s gives time for the animation
 				}
 			});
 		});

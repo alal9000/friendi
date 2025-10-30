@@ -307,9 +307,7 @@ def cancel_event(request, event_id):
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
             for attendee in attendees:
                 if attendee.phone_notifications_enabled and attendee.phone_number:
-                    sms_message = (
-                        f'The event "{event_title}" has been cancelled by the host.'
-                    )
+                    sms_message = f'From Friendi: The event "{event_title}" has been cancelled by the host.'
                     client.messages.create(
                         to=attendee.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,
