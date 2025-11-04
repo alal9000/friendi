@@ -166,6 +166,10 @@ def contact(request):
     return render(request, "app/contact.html")
 
 
+def premium(request):
+    return render(request, "app/premium.html")
+
+
 def feedback(request):
     return render(request, "app/feedback.html")
 

@@ -3,6 +3,13 @@ from django.utils import timezone
 from django.db import models
 from app.models import Profile
 
+AGE_BAND_CHOICES = [
+    ("none", "None"),
+    ("under_25", "Under 25"),
+    ("25_35", "25 - 35"),
+    ("36_over", "36 and over"),
+]
+
 
 class Recommendation(models.Model):
     name = models.CharField(max_length=255)
@@ -34,6 +41,13 @@ class Event(models.Model):
         blank=True,
         related_name="event_host",
     )
+    preferred_age_band = models.CharField(
+        max_length=20,
+        choices=AGE_BAND_CHOICES,
+        default="none",
+        verbose_name="Preferred Age Band",
+    )
+
     date_created = models.DateTimeField(auto_now_add=True, blank=True)
     guests = models.ManyToManyField(Profile, related_name="attended_events", blank=True)
     cancelled = models.BooleanField(default=False)

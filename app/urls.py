@@ -12,6 +12,7 @@ urlpatterns = [
     path("thank-you", views.thank_you, name="thank-you"),
     path("recommendations", views.recommendations, name="recommendations"),
     path("contact", views.contact, name="contact"),
+    path("premium", views.premium, name="premium"),
     path("feedback", views.feedback, name="feedback"),
     path("faqs", views.faqs, name="faqs"),
     path("delete-your-data", views.data_delete, name="data_delete"),

@@ -21,7 +21,7 @@ from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
 from .models import Profile, StatusUpdate, StatusComment
-from events.models import Event
+from events.models import AGE_BAND_CHOICES, Event
 
 
 # create event
@@ -46,6 +46,13 @@ class EventForm(ModelForm):
         },
     )
 
+    preferred_age_band = forms.ChoiceField(
+        required=True,
+        choices=AGE_BAND_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Preferred Age Band",
+    )
+
     class Meta:
         model = Event
         fields = "__all__"
@@ -65,6 +72,7 @@ class EventForm(ModelForm):
             "host_phone_number": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "e.g: 0412345678"}
             ),
+            "preferred_age_band": forms.Select(attrs={"class": "form-select"}),
         }
 
 
