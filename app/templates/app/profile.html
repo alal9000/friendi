@@ -58,6 +58,7 @@
 		display: flex;
 		gap: 10px;
 		flex-wrap: wrap;
+		justify-content: center;
 	}
 
 	.add-photo-box {
@@ -65,7 +66,6 @@
 		align-items: center;
 		justify-content: center;
 		width: 160px;
-		/* Portrait aspect ratio */
 		height: 220px;
 		border: 2px dashed #bbb;
 		border-radius: 12px;
@@ -95,6 +95,73 @@
 		height: 100%;
 		object-fit: cover;
 		border-radius: 12px;
+	}
+
+	.photo-slot {
+		position: relative;
+		width: 160px;
+		height: 220px;
+		border-radius: 12px;
+		overflow: hidden;
+		background-color: #f8f9fa;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.uploaded-photo {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 12px;
+		display: block;
+		cursor: pointer;
+	}
+
+	.remove-btn {
+		position: absolute;
+		top: 6px;
+		right: 6px;
+		background: rgba(0, 0, 0, 0.55);
+		border: none;
+		color: #fff;
+		font-size: 1.05rem;
+		line-height: 1;
+		border-radius: 50%;
+		width: 26px;
+		height: 26px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		z-index: 10;
+	}
+
+	.remove-btn:hover {
+		background: #ffc107;
+	}
+
+	#modal-image {
+		max-width: 100%;
+		height: auto;
+		display: block;
+		margin: auto;
+		width: auto;
+	}
+
+	#vistor-image {
+		width: 180px;
+		height: 240px;
+		overflow: hidden;
+		border-radius: 12px;
+		cursor: pointer;
+	}
+
+	#vistor-thumbnail {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
 	}
 </style>
 
@@ -347,54 +414,124 @@
 					<form method="post" enctype="multipart/form-data" class="mt-3">
 						{% csrf_token %}
 
+						<!-- user gallery -->
 						<div class="gallery-grid">
 							<!-- Box 1 -->
-							<input type="file" name="image_0" id="photo-upload-0" accept="image/*" style="display:none;">
-							<label for="photo-upload-0" class="add-photo-box">
+							<div class="photo-slot">
 								{% if user_photos|length > 0 %}
-								<img src="{{ user_photos.0.image.url }}">
-								{% else %}
-								<span class="plus-sign">+</span>
+								<img src="{{ user_photos.0.thumbnail.url }}" class="uploaded-photo" data-bs-toggle="modal"
+									data-bs-target="#ownerPhotoModal1" alt="Gallery photo 1">
+								<!-- Modal -->
+								<div class="modal fade" id="ownerPhotoModal1" tabindex="-1" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered modal-lg">
+										<div class="modal-content">
+											<div class="modal-body p-0">
+												<img id="modal-image" data-src="{{ user_photos.0.image.url }}">
+											</div>
+										</div>
+									</div>
+								</div>
+								{% if request.user.profile == profile %}
+								<button type="button" class="remove-btn" data-photo-id="{{ user_photos.0.id }}"
+									aria-label="Remove photo">×</button>
 								{% endif %}
-							</label>
+								{% else %}
+								<input type="file" name="image_0" id="photo-upload-0" accept="image/*" style="display:none;">
+								<label for="photo-upload-0" class="add-photo-box">
+									<span class="plus-sign">+</span>
+								</label>
+								{% endif %}
+							</div>
 
 							<!-- Box 2 -->
-							<input type="file" name="image_1" id="photo-upload-1" accept="image/*" style="display:none;">
-							<label for="photo-upload-1" class="add-photo-box">
+							<div class="photo-slot">
 								{% if user_photos|length > 1 %}
-								<img src="{{ user_photos.1.image.url }}">
-								{% else %}
-								<span class="plus-sign">+</span>
+								<img src="{{ user_photos.1.thumbnail.url }}" class="uploaded-photo" data-bs-toggle="modal"
+									data-bs-target="#ownerPhotoModal2" alt="Gallery photo 2">
+								<!-- Modal -->
+								<div class="modal fade" id="ownerPhotoModal2" tabindex="-1" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered modal-lg">
+										<div class="modal-content">
+											<div class="modal-body p-0">
+												<img id="modal-image" data-src="{{ user_photos.1.image.url }}">
+											</div>
+										</div>
+									</div>
+								</div>
+								{% if request.user.profile == profile %}
+								<button type="button" class="remove-btn" data-photo-id="{{ user_photos.1.id }}"
+									aria-label="Remove photo">×</button>
 								{% endif %}
-							</label>
+								{% else %}
+								<input type="file" name="image_1" id="photo-upload-1" accept="image/*" style="display:none;">
+								<label for="photo-upload-1" class="add-photo-box">
+									<span class="plus-sign">+</span>
+								</label>
+								{% endif %}
+							</div>
 
 							<!-- Box 3 -->
-							<input type="file" name="image_2" id="photo-upload-2" accept="image/*" style="display:none;">
-							<label for="photo-upload-2" class="add-photo-box">
+							<div class="photo-slot">
 								{% if user_photos|length > 2 %}
-								<img src="{{ user_photos.2.image.url }}">
-								{% else %}
-								<span class="plus-sign">+</span>
+								<img src="{{ user_photos.2.thumbnail.url }}" class="uploaded-photo" data-bs-toggle="modal"
+									data-bs-target="#ownerPhotoModal3" alt="Gallery photo 3">
+								<!-- Modal -->
+								<div class="modal fade" id="ownerPhotoModal3" tabindex="-1" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered modal-lg">
+										<div class="modal-content">
+											<div class="modal-body p-0">
+												<img id="modal-image" data-src="{{ user_photos.2.image.url }}">
+											</div>
+										</div>
+									</div>
+								</div>
+								{% if request.user.profile == profile %}
+								<button type="button" class="remove-btn" data-photo-id="{{ user_photos.2.id }}"
+									aria-label="Remove photo">×</button>
 								{% endif %}
-							</label>
+								{% else %}
+								<input type="file" name="image_2" id="photo-upload-2" accept="image/*" style="display:none;">
+								<label for="photo-upload-2" class="add-photo-box">
+									<span class="plus-sign">+</span>
+								</label>
+								{% endif %}
+							</div>
 
 							<!-- Box 4 -->
-							<input type="file" name="image_3" id="photo-upload-3" accept="image/*" style="display:none;">
-							<label for="photo-upload-3" class="add-photo-box">
+							<div class="photo-slot">
 								{% if user_photos|length > 3 %}
-								<img src="{{ user_photos.3.image.url }}">
-								{% else %}
-								<span class="plus-sign">+</span>
+								<img src="{{ user_photos.3.thumbnail.url }}" class="uploaded-photo" data-bs-toggle="modal"
+									data-bs-target="#ownerPhotoModal4" alt="Gallery photo 4">
+								<!-- Modal -->
+								<div class="modal fade" id="ownerPhotoModal4" tabindex="-1" aria-hidden="true">
+									<div class="modal-dialog modal-dialog-centered modal-lg">
+										<div class="modal-content">
+											<div class="modal-body p-0">
+												<img id="modal-image" data-src="{{ user_photos.3.image.url }}">
+											</div>
+										</div>
+									</div>
+								</div>
+								{% if request.user.profile == profile %}
+								<button type="button" class="remove-btn" data-photo-id="{{ user_photos.3.id }}"
+									aria-label="Remove photo">×</button>
 								{% endif %}
-							</label>
+								{% else %}
+								<input type="file" name="image_3" id="photo-upload-3" accept="image/*" style="display:none;">
+								<label for="photo-upload-3" class="add-photo-box">
+									<span class="plus-sign">+</span>
+								</label>
+								{% endif %}
+							</div>
 						</div>
+
 					</form>
 					{% else %}
 					<!-- Visitor view: read-only thumbnails -->
-					<div class="gallery-grid" style="display: flex; gap: 10px; flex-wrap: wrap;">
-						{% for photo in user_photos|slice:":4" %}
-						<div style="width:180px; height:240px; overflow:hidden; border-radius:12px; cursor:pointer;">
-							<img src="{{ photo.image.url }}" style="width:100%; height:100%; object-fit:cover;" data-bs-toggle="modal"
+					<div class="gallery-grid">
+						{% for photo in user_photos %}
+						<div id="vistor-image">
+							<img src="{{ photo.thumbnail.url }}" id="vistor-thumbnail" data-bs-toggle="modal"
 								data-bs-target="#photoModal{{ forloop.counter }}">
 						</div>
 
@@ -403,7 +540,7 @@
 							<div class="modal-dialog modal-dialog-centered modal-lg">
 								<div class="modal-content">
 									<div class="modal-body p-0">
-										<img src="{{ photo.image.url }}" style="width:100%; height:auto; display:block; margin:auto;">
+										<img id="modal-image" src="{{ photo.image.url }}">
 									</div>
 								</div>
 							</div>
@@ -507,28 +644,91 @@
 
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
+		const removeButtons = document.querySelectorAll(".remove-btn");
 		const photoInputs = document.querySelectorAll('input[type="file"][id^="photo-upload-"]');
 
+		document.querySelectorAll('.modal').forEach(modal => {
+			modal.addEventListener('show.bs.modal', function () {
+				const img = this.querySelector('#modal-image');
+				if (img && !img.src) {
+					img.src = img.dataset.src;
+				}
+			});
+		});
+
+		// remove gallery photo JS
+		removeButtons.forEach(btn => {
+			btn.addEventListener("click", async (e) => {
+				const photoId = e.currentTarget.getAttribute("data-photo-id");
+				if (!photoId) return;
+
+				const confirmDelete = confirm("Are you sure you want to remove this photo?");
+				if (!confirmDelete) return;
+
+				const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+				try {
+					const response = await fetch("/remove-gallery-image/", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRFToken": csrfToken
+						},
+						body: JSON.stringify({
+							photo_id: photoId
+						})
+					});
+
+					if (response.ok) {
+						location.reload();
+					} else {
+						alert("Failed to remove photo.");
+					}
+				} catch (error) {
+					console.error("Error removing photo:", error);
+				}
+			});
+		});
+
+		// gallery upload JS
 		photoInputs.forEach(input => {
 			input.addEventListener("change", function () {
-				if (this.files[0]) {
-					// Show loading overlay
+				const file = this.files[0];
+				if (!file) return;
+
+				const img = new Image();
+				img.src = URL.createObjectURL(file);
+
+				img.onload = () => {
+					const minWidth = 400;
+					const maxWidth = 4000;
+
+					if (img.width < minWidth) {
+						alert(`Image is too small. Minimum width is ${minWidth}px.`);
+						this.value = ""; // clear input
+						return;
+					}
+					if (img.width > maxWidth) {
+						alert(`Image is too large. Maximum width is ${maxWidth}px.`);
+						this.value = ""; // clear input
+						return;
+					}
+
+					// Only after validation passes:
 					const overlay = document.getElementById("galleryLoadingOverlay");
 					overlay.style.display = "flex";
 
-					// Play Lottie animation
-					const dotLottie = new window.DotLottie({
+					new window.DotLottie({
 						autoplay: true,
 						loop: true,
 						canvas: document.getElementById("gallery-dotlottie-canvas"),
-						src: "https://lottie.host/047bfc54-8fe2-42d2-9631-ac15e86e346b/c4UbKclfSF.lottie", // replace with your Lottie
+						src: "https://lottie.host/047bfc54-8fe2-42d2-9631-ac15e86e346b/c4UbKclfSF.lottie",
 					});
 
-					// Submit the form after short delay
 					setTimeout(() => {
 						this.form.submit();
-					}, 800); // 0.8s gives time for the animation
-				}
+					}, 600);
+				};
 			});
 		});
 		/* const clearStatusBtn = document.getElementById("clear-status-btn");

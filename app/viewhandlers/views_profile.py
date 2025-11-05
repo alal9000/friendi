@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -10,6 +11,7 @@ from django.contrib import messages
 from django.contrib.messages import get_messages
 from allauth.account.models import EmailAddress
 from allauth.account.utils import send_email_confirmation
+from django.http import JsonResponse
 
 from app.models import Profile, StatusUpdate
 from events.models import Event
@@ -49,7 +51,7 @@ def profile(request, profile_id):
     ):
         messages.success(
             request,
-            "Your support helps keep us going. Tell your friends and family about Friendi or invite them below.",
+            "Your support helps keep us growing. Tell your friends and family about Friendi or invite them below.",
         )
         # Set the session flag to indicate that the message has been shown
         request.session["profile_support_message_shown"] = True
@@ -68,10 +70,6 @@ def profile(request, profile_id):
         ).exists()
     ):
         is_friend = True
-
-    # get gallery images
-    user_photos = profile.gallery_photos.all()[:4]
-    # end gallery images
 
     user_instance = profile.user
     friend_visibility = profile.friend_visibility
@@ -147,14 +145,16 @@ def profile(request, profile_id):
     # initalize forms
     user_form = UserUpdateForm(instance=user_instance)
     description_form = ProfileDescriptionForm(instance=profile)
-    status_form = StatusUpdateForm(request.POST)
+    # status_form = StatusUpdateForm(request.POST)
     invite_friend_form = InviteFriendForm()
 
     # Retrieve the latest status update for the current profile
-    latest_status_update = StatusUpdate.objects.filter(
-        profile=current_user_profile
-    ).first()
+    # latest_status_update = StatusUpdate.objects.filter(
+    #     profile=current_user_profile
+    # ).first()
 
+    # get the users gallery photos
+    user_photos = profile.gallery_photos.all()
     # handle form submissions
     if request.method == "POST":
         # Status update form
@@ -183,11 +183,11 @@ def profile(request, profile_id):
 
         # handle gallery image uploads
         if request.user.profile == profile:
-            for i in range(4):  # or however many boxes
+            for i in range(4):
                 file_key = f"image_{i}"
                 if request.FILES.get(file_key):
                     # Get existing photos ordered by upload date DESC
-                    existing_photos = list(profile.gallery_photos.all())
+                    existing_photos = list(user_photos)
 
                     # If this slot already exists, replace it
                     if i < len(existing_photos):
@@ -202,6 +202,7 @@ def profile(request, profile_id):
 
                     messages.success(request, "Photo updated successfully!")
                     return redirect("profile", profile_id=profile_id)
+        # end handle gallery image uploads
 
         # friend form
         if "friend-button" in request.POST:
@@ -281,7 +282,7 @@ def profile(request, profile_id):
 
     context = {
         "is_friend": is_friend,
-        "status_form": status_form,
+        # "status_form": status_form,
         "invite_friend_form": invite_friend_form,
         "user_form": user_form,
         "user_photos": user_photos,
@@ -294,7 +295,7 @@ def profile(request, profile_id):
         "is_first_visit": is_first_visit,
         "description_form": description_form,
         "success_message": success_message,
-        "latest_status_update": latest_status_update,
+        # "latest_status_update": latest_status_update,
     }
 
     return render(request, "app/profile.html", context)
@@ -414,3 +415,22 @@ def crop_image(request, profile_id):
     }
 
     return render(request, "app/crop_image.html", context)
+
+
+@login_required
+def remove_gallery_image(request):
+    if request.method == "POST":
+
+        data = json.loads(request.body)
+        photo_id = data.get("photo_id")
+
+        try:
+            photo = Photo.objects.get(id=photo_id, profile=request.user.profile)
+            photo.delete()
+            return JsonResponse({"success": True})
+        except Photo.DoesNotExist:
+            return JsonResponse(
+                {"success": False, "error": "Photo not found"}, status=404
+            )
+
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)

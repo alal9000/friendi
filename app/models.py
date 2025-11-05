@@ -49,38 +49,38 @@ class Profile(models.Model):
         return self.attended_events.filter(cancelled=False, event_date__gte=now).count()
 
     # Resize the profile picture to 350x350 px
-    def save(self, *args, **kwargs):
-        # Skip save logic if profile is being created with the default picture
-        if (
-            self.pk
-            and self.profile_pic
-            and self.profile_pic.name != "placeholder/profile2.png"
-        ):
-            img = Image.open(self.profile_pic)
+    # def save(self, *args, **kwargs):
+    #     # Skip save logic if profile is being created with the default picture
+    #     if (
+    #         self.pk
+    #         and self.profile_pic
+    #         and self.profile_pic.name != "placeholder/profile2.png"
+    #     ):
+    #         img = Image.open(self.profile_pic)
 
-            # Apply the EXIF orientation to fix rotation issues
-            img = ImageOps.exif_transpose(img)
+    #         # Apply the EXIF orientation to fix rotation issues
+    #         img = ImageOps.exif_transpose(img)
 
-            # Convert to RGB to ensure compatibility with JPEG format
-            if img.mode != "RGB":
-                img = img.convert("RGB")
+    #         # Convert to RGB to ensure compatibility with JPEG format
+    #         if img.mode != "RGB":
+    #             img = img.convert("RGB")
 
-            # Resize only if the image is larger than the target size
-            if img.height > 350 or img.width > 350:
-                output_size = (350, 350)
-                img.thumbnail(output_size)
+    #         # Resize only if the image is larger than the target size
+    #         if img.height > 350 or img.width > 350:
+    #             output_size = (350, 350)
+    #             img.thumbnail(output_size)
 
-                buffer = BytesIO()
-                img.save(buffer, format="JPEG")
-                buffer.seek(0)
+    #             buffer = BytesIO()
+    #             img.save(buffer, format="JPEG")
+    #             buffer.seek(0)
 
-                # Replace the profile_pic content
-                self.profile_pic.save(
-                    self.profile_pic.name, ContentFile(buffer.read()), save=False
-                )
+    #             # Replace the profile_pic content
+    #             self.profile_pic.save(
+    #                 self.profile_pic.name, ContentFile(buffer.read()), save=False
+    #             )
 
-        # Save only once after processing
-        super().save(*args, **kwargs)
+    #     # Save only once after processing
+    #     super().save(*args, **kwargs)
 
 
 class StatusUpdate(models.Model):
