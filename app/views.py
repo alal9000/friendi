@@ -1,27 +1,46 @@
 import re
+import os
+import json
+import environ
+import stripe
+from stripe import Webhook, SignatureVerificationError
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.text import capfirst
-from django.shortcuts import render
+from django.shortcuts import render, redirect, reverse
 from django.urls import reverse_lazy
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.messages import get_messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from allauth.account.views import SignupView, LoginView
 from django.db.models import Q, Count, F, Value
 from django.db.models.functions import Coalesce
+from django.contrib.auth.models import User
+from django.contrib.auth import login
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
-from .models import NewsletterSignup
+from .models import NewsletterSignup, CheckoutSessionRecord
 from notifications.models import Notification
 from .forms import (
     CustomSignupForm,
     CustomLoginForm,
 )
 from events.models import Event
-from django.contrib.auth.models import User
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
+
+# stripe config
+DOMAIN = "http://localhost:8000"  # Move this to your settings file or environment variable for production.
+stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+
+# Load the appropriate .env file
+env = environ.Env()
+if os.environ.get("DJANGO_ENV") != "production":
+    env.read_env(".env.development")
+else:
+    env.read_env(".env.production")
 
 
 # function based views
@@ -192,6 +211,143 @@ def thank_you(request):
 
 def tos(request):
     return render(request, "app/terms_of_service.html")
+
+
+# stripe views
+def subscribe(request) -> HttpResponse:
+    return render(request, "app/subscribe.html")
+
+
+def cancel(request) -> HttpResponse:
+    return render(request, "app/cancel.html")
+
+
+def success(request) -> HttpResponse:
+
+    print(f"{request.session = }")
+
+    stripe_checkout_session_id = request.GET["session_id"]
+
+    return render(request, "app/success.html")
+
+
+def create_checkout_session(request) -> HttpResponse:
+    price_lookup_key = request.POST["price_lookup_key"]
+    try:
+        prices = stripe.Price.list(
+            lookup_keys=[price_lookup_key], expand=["data.product"]
+        )
+        price_item = prices.data[0]
+
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {"price": price_item.id, "quantity": 1},
+                # You could add differently priced services here, e.g., standard, business, first-class.
+            ],
+            mode="subscription",
+            success_url=DOMAIN
+            + reverse("success")
+            + "?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=DOMAIN + reverse("cancel"),
+        )
+
+        # We connect the checkout session to the user who initiated the checkout.
+        CheckoutSessionRecord.objects.create(
+            user=request.user,
+            stripe_checkout_session_id=checkout_session.id,
+            stripe_price_id=price_item.id,
+        )
+
+        return redirect(
+            checkout_session.url, code=303  # Either the success or cancel url.
+        )
+    except Exception as e:
+        print(e)
+        return HttpResponse("Server error", status=500)
+
+
+def direct_to_customer_portal(request) -> HttpResponse:
+    """
+    Creates a customer portal for the user to manage their subscription.
+    """
+    checkout_record = CheckoutSessionRecord.objects.filter(
+        user=request.user
+    ).last()  # For demo purposes, we get the last checkout session record the user created.
+
+    checkout_session = stripe.checkout.Session.retrieve(
+        checkout_record.stripe_checkout_session_id
+    )
+
+    portal_session = stripe.billing_portal.Session.create(
+        customer=checkout_session.customer,
+        return_url=DOMAIN + reverse("subscribe"),  # Send the user here from the portal.
+    )
+    return redirect(portal_session.url, code=303)
+
+
+@csrf_exempt
+def collect_stripe_webhook(request) -> JsonResponse:
+    """
+    Stripe sends webhook events to this endpoint.
+    We verify the webhook signature and updates the database record.
+    """
+    webhook_secret = env("STRIPE_WEBHOOK_SECRET").strip()
+    signature = request.META["HTTP_STRIPE_SIGNATURE"]
+    payload = request.body
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload=payload, sig_header=signature, secret=webhook_secret
+        )
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except SignatureVerificationError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    _update_record(event)
+
+    return JsonResponse({"status": "success"})
+
+
+def _update_record(webhook_event) -> None:
+    """
+    We update our database record based on the webhook event.
+
+    Use these events to update your database records.
+    You could extend this to send emails, update user records, set up different access levels, etc.
+    """
+    data_object = webhook_event["data"]["object"]
+    event_type = webhook_event["type"]
+
+    if event_type == "checkout.session.completed":
+        checkout_record = CheckoutSessionRecord.objects.get(
+            stripe_checkout_session_id=data_object["id"]
+        )
+        checkout_record.stripe_customer_id = data_object["customer"]
+        checkout_record.has_access = True
+        checkout_record.is_completed = True
+        checkout_record.save()
+
+        # Update profile
+        profile = checkout_record.user.profile
+        profile.is_premium = True
+        profile.save()
+
+    elif event_type == "customer.subscription.deleted":
+        checkout_record = CheckoutSessionRecord.objects.get(
+            stripe_customer_id=data_object["customer"]
+        )
+        checkout_record.has_access = False
+        checkout_record.is_completed = True
+        checkout_record.save()
+
+        # Update profile
+        profile = checkout_record.user.profile
+        profile.is_premium = False
+        profile.save()
+
+
+# end stripe views
 
 
 # class based views

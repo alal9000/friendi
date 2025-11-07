@@ -79,6 +79,14 @@ TWILIO_FROM_NUMBER = env("TWILIO_FROM_NUMBER")
 
 # end twilio settings
 
+# stripe
+
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+
+# end stripe
+
 
 # django q settings
 Q_CLUSTER = {

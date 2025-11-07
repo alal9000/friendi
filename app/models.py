@@ -1,9 +1,6 @@
 from django.utils import timezone
-from io import BytesIO
-from django.core.files.base import ContentFile
 from django.db import models
 from django.contrib.auth.models import User
-from PIL import Image, ImageOps
 
 AGE_BAND_CHOICES = [
     ("rather_not_say", "Leave blank"),
@@ -20,6 +17,7 @@ class Profile(models.Model):
         null=True,
         blank=True,
     )
+    is_premium = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     phone_notifications_enabled = models.BooleanField(default=False)
     email_notifications_enabled = models.BooleanField(default=True)
@@ -125,3 +123,14 @@ class NewsletterSignup(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class CheckoutSessionRecord(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, help_text="The user who initiated the checkout."
+    )
+    stripe_customer_id = models.CharField(max_length=255)
+    stripe_checkout_session_id = models.CharField(max_length=255)
+    stripe_price_id = models.CharField(max_length=255)
+    has_access = models.BooleanField(default=False)
+    is_completed = models.BooleanField(default=False)
