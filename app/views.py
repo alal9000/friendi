@@ -31,16 +31,15 @@ from .forms import (
 )
 from events.models import Event
 
-# stripe config
-DOMAIN = "http://localhost:8000"  # Move this to your settings file or environment variable for production.
-stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
-
 # Load the appropriate .env file
 env = environ.Env()
 if os.environ.get("DJANGO_ENV") != "production":
     env.read_env(".env.development")
 else:
     env.read_env(".env.production")
+
+# stripe config
+stripe.api_key = env("STRIPE_SECRET_KEY")
 
 
 # function based views
@@ -222,13 +221,24 @@ def cancel(request) -> HttpResponse:
     return render(request, "app/cancel.html")
 
 
-def success(request) -> HttpResponse:
+def success(request):
+    stripe_checkout_session_id = request.GET.get("session_id")
+    context = {}
 
-    print(f"{request.session = }")
+    if stripe_checkout_session_id:
+        try:
+            record = CheckoutSessionRecord.objects.get(
+                stripe_checkout_session_id=stripe_checkout_session_id
+            )
+            context["user_email"] = record.user.email
+            context["user_first_name"] = record.user.first_name
+            context["status"] = "Payment successful!"
+        except CheckoutSessionRecord.DoesNotExist:
+            context["status"] = "Payment processed, but record not found yet."
+    else:
+        context["status"] = "No session ID provided."
 
-    stripe_checkout_session_id = request.GET["session_id"]
-
-    return render(request, "app/success.html")
+    return render(request, "app/success.html", context)
 
 
 def create_checkout_session(request) -> HttpResponse:
@@ -245,10 +255,14 @@ def create_checkout_session(request) -> HttpResponse:
                 # You could add differently priced services here, e.g., standard, business, first-class.
             ],
             mode="subscription",
-            success_url=DOMAIN
+            success_url=env("DOMAIN")
             + reverse("success")
             + "?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=DOMAIN + reverse("cancel"),
+            cancel_url=env("DOMAIN") + reverse("cancel"),
+            customer_email=request.user.email,
+            metadata={
+                "user_id": request.user.id,
+            },
         )
 
         # We connect the checkout session to the user who initiated the checkout.
@@ -280,7 +294,8 @@ def direct_to_customer_portal(request) -> HttpResponse:
 
     portal_session = stripe.billing_portal.Session.create(
         customer=checkout_session.customer,
-        return_url=DOMAIN + reverse("subscribe"),  # Send the user here from the portal.
+        return_url=env("DOMAIN")
+        + reverse("subscribe"),  # Send the user here from the portal.
     )
     return redirect(portal_session.url, code=303)
 
@@ -320,18 +335,24 @@ def _update_record(webhook_event) -> None:
     event_type = webhook_event["type"]
 
     if event_type == "checkout.session.completed":
-        checkout_record = CheckoutSessionRecord.objects.get(
-            stripe_checkout_session_id=data_object["id"]
-        )
-        checkout_record.stripe_customer_id = data_object["customer"]
-        checkout_record.has_access = True
-        checkout_record.is_completed = True
-        checkout_record.save()
+        user_id = data_object["metadata"].get("user_id")
 
-        # Update profile
-        profile = checkout_record.user.profile
-        profile.is_premium = True
-        profile.save()
+        if user_id:
+            user = User.objects.get(id=user_id)
+
+            checkout_record = CheckoutSessionRecord.objects.get(
+                stripe_checkout_session_id=data_object["id"]
+            )
+            checkout_record.user = user
+            checkout_record.stripe_customer_id = data_object["customer"]
+            checkout_record.has_access = True
+            checkout_record.is_completed = True
+            checkout_record.save()
+
+            # Update profile
+            profile = checkout_record.user.profile
+            profile.is_premium = True
+            profile.save()
 
     elif event_type == "customer.subscription.deleted":
         checkout_record = CheckoutSessionRecord.objects.get(
