@@ -7,7 +7,7 @@ from django.core.files.base import ContentFile
 # Create your models here.
 
 
-class Photo(models.Model):
+class GalleryPhoto(models.Model):
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="gallery_photos"
     )
@@ -48,3 +48,24 @@ class Photo(models.Model):
 
     def __str__(self):
         return f"{self.profile.user.username}'s Photo"
+
+
+class Album(models.Model):
+    name = models.CharField(max_length=100, null=False, blank=False)
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class AlbumPhoto(models.Model):
+    album = models.ForeignKey(Album, on_delete=models.SET_NULL, null=True, blank=True)
+    image = models.ImageField(null=False, blank=False)
+    description = models.TextField()
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True)
+
+    def __str__(self):
+        return self.description

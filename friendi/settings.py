@@ -190,12 +190,12 @@ WSGI_APPLICATION = "friendi.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": env("DB_ENGINE", default="django.db.backends.sqlite3"),
-        "NAME": env("DB_NAME", default=os.path.join(BASE_DIR, "db.sqlite3")),
-        "USER": env("DB_USER", default=""),
-        "PASSWORD": env("DB_PASSWORD", default=""),
-        "HOST": env("DB_HOST", default=""),
-        "PORT": env("DB_PORT", default=""),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "dbmaster_test",
+        "USER": "postgres",
+        "PASSWORD": "Sydney45!",
+        "HOST": "ls-10d6a5c132f12f9ff9252d45d053b2b7a158f49f.clqm42sjkslc.ap-southeast-2.rds.amazonaws.com",
+        "PORT": "5432",
     }
 }
 

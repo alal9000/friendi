@@ -21,6 +21,35 @@
   .viewport-height {
     min-height: 70vh;
   }
+
+  /* premium blur styles */
+  .premium-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(6px);
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    z-index: 5;
+  }
+
+  .premium-overlay .overlay-text {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #333;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  }
+
+  .gallery-wrapper {
+    position: relative;
+  }
+
+  .gallery-content {
+    position: relative;
+    z-index: 1;
+  }
 </style>
 <div class="container mt-2 viewport-height">
   <!-- messages -->
@@ -37,81 +66,139 @@
   <!-- end messages -->
 
   <h1 class="mb-4">{{ profile.user.first_name }}'s Photo Gallery</h1>
-  <div class="row">
 
-    <!-- photo column -->
-    <div class="col-md-9 mb-3">
+  <div class="gallery-wrapper position-relative">
+    {% if request.user.is_authenticated and request.user.profile == profile %}
+    {% if not profile.is_premium %}
+    <a href="{% url 'subscribe' %}">
+      <div class="premium-overlay d-flex align-items-center justify-content-center">
+        <span class="overlay-text">👑 Friendi Premium</span>
+      </div>
+    </a>
+    {% endif %}
+    {% endif %}
+
+
+    <div class="gallery-content">
       <div class="row">
-        {% for photo in photos %}
-        <div class="col-md-4 mb-3">
+        {% if profile.is_premium or request.user.profile == profile %}
+
+        <!-- album column -->
+        <div class="col-md-3 mb-3">
           <div class="card">
-            <a href="{% url 'photo' profile.id photo.id %}"><img src="{{ photo.image.url }}" class="img-thumbnail"
-                alt="..." /></a>
-            <div class="card-body">
-              <small class="card-text">
-                Album: {% if photo.album.name %} {{ photo.album.name }} {% else %} <p class="d-inline">All</p>
+            <div class="card-header">Albums:</div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item"><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">All</a>
+              </li>
+
+              {% for album in albums %}
+              <li class="list-group-item d-flex justify-content-between">
+                <a href="{% url 'gallery' profile.id %}?album={{album.name}}"
+                  class="text-decoration-none">{{ album.name }}</a>
+
+                {% if request.user.profile == profile %}
+                <!-- delete album form -->
+                <form method="POST" action="" id="delete-album-form-{{ album.id }}">
+                  {% csrf_token %}
+                  <input type="hidden" name="album_id" value="{{album.id}}">
+                  <button type="button" class="bi bi-trash delete-btn" data-bs-toggle="modal"
+                    data-bs-target="#confirmDeleteModal"></button>
+                </form>
+                <!-- end form -->
                 {% endif %}
-              </small>
-            </div>
-            <div class="d-flex justify-content-between">
-              <a href="{% url 'photo' profile.id photo.id %}" class="btn btn-success btn-sm m-1 w-100">View</a>
-              {% if request.user.profile == profile %}
-              <!-- Delete photo form -->
-              <form method="POST" action="">
-                {% csrf_token %}
-                <input type="hidden" name="photo_id" value="{{photo.id}}">
-                <button type="submit" class="btn btn-outline-dark btn-sm m-1 delete-btn me-2"><i
-                    class="bi bi-trash"></i></button>
-              </form>
-              <!-- end delete photo form -->
+              </li>
+              {% endfor %}
+
+              {% if request.user.profile.id == profile.id %}
+              <a href="{% url 'add_photo' profile.id %}" class="btn btn-success btn-block btn-sm m-1">Add Photo</a>
+              <a href="{% url 'add_album' profile.id %}" class="btn btn-warning btn-block btn-sm m-1">Add Album</a>
               {% endif %}
-            </div>
+            </ul>
           </div>
         </div>
-        {% empty %}
-        <h3>No photos...</h3>
-        {% endfor %}
-      </div>
+        <!-- end album column -->
 
-      <!-- pagination -->
-      {% if photos.has_other_pages %}
-      <div class="d-flex justify-content-center">
-        <nav aria-label="Page navigation">
-          <ul class="pagination">
-            {% if photos.has_previous %}
-            <li class="page-item">
-              <a class="page-link"
-                href="?page={{ photos.previous_page_number }}{% if album %}&album={{ album }}{% endif %}"
-                aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
-            </li>
-            {% endif %}
-            {% for num in photos.paginator.page_range %}
-            {% if photos.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% elif num > photos.number|add:-3 and num < photos.number|add:3 %}
-            <li class="page-item"><a class="page-link"
-                href="?page={{ num }}{% if album %}&album={{ album }}{% endif %}">{{ num }}</a></li>
-            {% endif %}
+        <!-- photo column -->
+        <div class="col-md-9 mb-3">
+          <div class="row">
+            {% for photo in photos %}
+            <div class="col-md-4 mb-3">
+              <div class="card">
+                <a href="{% url 'photo' profile.id photo.id %}"><img src="{{ photo.image.url }}" class="img-thumbnail"
+                    alt="..." /></a>
+                <div class="card-body">
+                  <small class="card-text">
+                    Album: {% if photo.album.name %} {{ photo.album.name }} {% else %} <p class="d-inline">All</p>
+                    {% endif %}
+                  </small>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <a href="{% url 'photo' profile.id photo.id %}" class="btn btn-success btn-sm m-1 w-100">View</a>
+                  {% if request.user.profile == profile %}
+                  <!-- Delete photo form -->
+                  <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="photo_id" value="{{photo.id}}">
+                    <button type="submit" class="btn btn-outline-dark btn-sm m-1 delete-btn me-2"><i
+                        class="bi bi-trash"></i></button>
+                  </form>
+                  <!-- end delete photo form -->
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <h3>No photos...</h3>
             {% endfor %}
-            {% if photos.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ photos.next_page_number }}{% if album %}&album={{ album }}{% endif %}"
-                aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </nav>
+          </div>
+
+          <!-- pagination -->
+          {% if photos.has_other_pages %}
+          <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+              <ul class="pagination">
+                {% if photos.has_previous %}
+                <li class="page-item">
+                  <a class="page-link"
+                    href="?page={{ photos.previous_page_number }}{% if album %}&album={{ album }}{% endif %}"
+                    aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                {% endif %}
+                {% for num in photos.paginator.page_range %}
+                {% if photos.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > photos.number|add:-3 and num < photos.number|add:3 %}
+                <li class="page-item"><a class="page-link"
+                    href="?page={{ num }}{% if album %}&album={{ album }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if photos.has_next %}
+                <li class="page-item">
+                  <a class="page-link"
+                    href="?page={{ photos.next_page_number }}{% if album %}&album={{ album }}{% endif %}"
+                    aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+          {% endif %}
+          <!-- end -->
+        </div>
+        <!-- end -->
+
+
+      </div>
+      {% else %}
+      <div class="text-center mt-5">
+        <h4>No photos to show.</h4>
       </div>
       {% endif %}
-      <!-- end -->
     </div>
-    <!-- end -->
-
-
   </div>
 </div>
 

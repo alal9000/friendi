@@ -18,7 +18,7 @@ from events.models import Event
 from friends.models import Friend
 from app.decorators import check_profile_id
 from notifications.models import Notification
-from photos.models import Photo
+from photos.models import GalleryPhoto
 from app.forms import (
     ProfileUpdateForm,
     StatusUpdateForm,
@@ -196,7 +196,7 @@ def profile(request, profile_id):
                         existing_photo.save()
                     else:
                         # Otherwise, create a new photo
-                        Photo.objects.create(
+                        GalleryPhoto.objects.create(
                             profile=profile, image=request.FILES[file_key]
                         )
 
@@ -425,10 +425,10 @@ def remove_gallery_image(request):
         photo_id = data.get("photo_id")
 
         try:
-            photo = Photo.objects.get(id=photo_id, profile=request.user.profile)
+            photo = GalleryPhoto.objects.get(id=photo_id, profile=request.user.profile)
             photo.delete()
             return JsonResponse({"success": True})
-        except Photo.DoesNotExist:
+        except GalleryPhoto.DoesNotExist:
             return JsonResponse(
                 {"success": False, "error": "Photo not found"}, status=404
             )

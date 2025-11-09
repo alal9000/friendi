@@ -408,7 +408,8 @@
 				<div class="card card-body mb-2"
 					data-tg-tour="<h5>Here are your gallery images.</h5> <p>Add up to four images to your profile so people can see your photos. Lets get started! 🎉</p>"
 					data-tg-order="6">
-					<h1>{{ profile.user.first_name }}'s Gallery</h1>
+					<h1><a href="{% url 'gallery' profile.id %}" class="text-decoration-none">{{ profile.user.first_name }}'s
+							Gallery</a></h1>
 
 					{% if request.user.profile == profile %}
 					<form method="post" enctype="multipart/form-data" class="mt-3">

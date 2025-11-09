@@ -1,0 +1,53 @@
+{% extends "app/main.html" %} {% load static %}{% block content %}
+<style>
+  .optional {
+    color: green;
+  }
+
+  .required {
+    color: red;
+  }
+</style>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+      <a class="btn btn-secondary my-3" href="{% url 'gallery' profile.id %}">Go Back</a>
+      <div class="card">
+
+
+
+        <form method="POST" action="" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-3 m-3">
+            <label class="form-label"><span class="optional">Optional:</span> <em>Select an album or create
+                below</em></label>
+            <select class="form-select" name="album">
+              <option value="none">Select a album</option>
+              {% for album in albums %}
+              <option value="{{ album.id }}">{{ album.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3 m-3">
+            <label class="form-label"><span class="optional">Optional:</span> <em>Create a new album</em></label>
+            <input name="album_new" class="form-control" type="text" placeholder="Create a new album">
+          </div>
+          <div class="mb-3 m-3">
+            <label class="form-label"><span class="required">*</span>Description:</label>
+            <input required name="description" class="form-control" type="text" placeholder="Enter a description">
+          </div>
+          <div class="mb-3 m-3">
+            <label class="form-label"><span class="required">*</span>Upload Image:</label>
+            <input required name="images" multiple class="form-control" type="file">
+          </div>
+          <button class="btn btn-success m-3">Submit</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
