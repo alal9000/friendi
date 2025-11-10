@@ -1,4 +1,5 @@
 import json
+from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
 from twilio.rest import Client
@@ -8,14 +9,17 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from allauth.account.models import EmailAddress
+from allauth.account.utils import send_email_confirmation
+from django.shortcuts import redirect
+
 from app.models import Profile
 from .models import Event, EventComment, EventRequest, Recommendation
 from app.decorators import check_profile_id
 from app.forms import EventForm
 from notifications.models import Notification
-from allauth.account.models import EmailAddress
-from allauth.account.utils import send_email_confirmation
-from django.shortcuts import redirect
+from friends.models import Friend
+from notifications.models import Notification
 
 
 @login_required
@@ -79,7 +83,11 @@ def create(request):
     return render(
         request,
         "events/create.html",
-        {"form": form, "recommendations": json.dumps(recommendations)},
+        {
+            "form": form,
+            "recommendations": json.dumps(recommendations),
+            "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,
+        },
     )
 
 
@@ -252,14 +260,26 @@ def event(request, event_id):
 
     comments = EventComment.objects.filter(event=event)
 
+    # get friends for event invites
+    friends_as_sender = Friend.objects.filter(
+        sender=request.user.profile, status="accepted"
+    ).values_list("receiver", flat=True)
+    friends_as_receiver = Friend.objects.filter(
+        receiver=request.user.profile, status="accepted"
+    ).values_list("sender", flat=True)
+    friend_ids = list(friends_as_sender) + list(friends_as_receiver)
+    friends = Profile.objects.filter(id__in=friend_ids)
+
     context = {
         "event": event,
+        "friends": friends,
         "is_guest": is_guest,
         "comments": comments,
         "is_host": is_host,
         "total_current_attendees": total_current_attendees,
         "button": button,
         "locked": event.locked,
+        "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,
     }
 
     return render(request, "events/event.html", context)
@@ -406,3 +426,49 @@ def event_requests(request, profile_id):
     }
 
     return render(request, "events/event_requests.html", context)
+
+
+@login_required
+def send_event_invite(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    host_profile = request.user.profile
+
+    if request.method == "POST":
+        recipient_id = request.POST.get("recipient_id")
+        recipient = get_object_or_404(Profile, id=recipient_id)
+
+        # Only the host can send invites
+        if event.host != host_profile:
+            messages.error(request, "Only the event host can send invites.")
+            return redirect("event", event_id)
+
+        is_friend = Friend.objects.filter(
+            (
+                Q(sender=host_profile, receiver=recipient)
+                | Q(sender=recipient, receiver=host_profile)
+            ),
+            status="accepted",
+        ).exists()
+        if not is_friend:
+            messages.error(request, "You can only invite friends.")
+            return redirect("event", event_id)
+
+        existing = Notification.objects.filter(
+            user=recipient,
+            message__icontains=f"invited you to the event '{event.event_title}'",
+        )
+        if existing.exists():
+            messages.warning(request, "You’ve already invited this friend.")
+            return redirect("event", event_id)
+
+        # Create notification
+        Notification.objects.create(
+            user=recipient,
+            message=f"{host_profile} invited you to the event '{event.event_title}'",
+            link=f"/events/event/{event.id}",
+        )
+
+        messages.success(request, f"Invite sent to {recipient.user.first_name}.")
+        return redirect("event", event_id)
+
+    return redirect("event", event_id)

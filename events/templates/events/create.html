@@ -1,0 +1,299 @@
+{% extends "app/main.html" %} {% load static %} {% block content %}
+
+<style>
+  #input {
+    height: 50px;
+    max-width: 100%;
+  }
+
+  #input-label {
+    display: block;
+  }
+
+  #map {
+    height: 300px;
+    max-width: 100%;
+  }
+</style>
+
+<!-- create body -->
+<section>
+  <div class="container">
+    <div class="row ">
+      <div class="col-md">
+        <div class="create">
+          <h1>Create Event</h1>
+          <form action="{% url 'create' %}" method="post" enctype="multipart/form-data" class="mt-4 form-class">
+            {% csrf_token %}
+            <div class="mb-3 form-group">
+              {{ form.event_title.label_tag }} {{ form.event_title }}
+            </div>
+            <div class="mb-3 form-group">
+              <label id="input-label" for="input">Location:</label>
+              <div class="d-flex align-items-center">
+                <input type="text" id="input" name="location" class="form-control" required
+                  placeholder="Start typing for suggestions" />
+                <button type="button" id="recommendBtn" class="btn btn-secondary ms-2">Recommend</button>
+              </div>
+            </div>
+
+            <div class="mb-3 form-group">
+              <label for="id_event_date">Event date:</label>
+              <input type="date" id="id_event_date" name="event_date" required class="form-control" />
+            </div>
+            <div class="mb-3 form-group">
+              <label for="id_event_time">Event time:</label>
+              <input type="time" id="id_event_time" name="event_time" required class="form-control" />
+            </div>
+            <div class="mb-3 form-group">
+              {{ form.total_attendees.label_tag }} <div class="d-flex">{{ form.total_attendees }}
+                <span data-bs-toggle="tooltip" data-bs-trigger="click"
+                  title="The total number of attendees including the host" class="d-inline-block ms-2 mb-2"
+                  tabindex="0">
+                  <i class="bi bi-info-circle-fill" style="font-size: 1.5em; cursor: pointer;"></i>
+                </span></div>
+            </div>
+            <div class="mb-3 form-group">
+              {{ form.host_phone_number.label_tag }}
+              <div class="d-flex">
+                <div class="input-group">
+                  <span class="input-group-text">+61</span>
+                  <input type="text" name="host_phone_number" class="form-control" placeholder="e.g: 0412345678"
+                    minlength="9" maxlength="10" pattern="\d{9,10}" title="Enter 9 or 10 digits"
+                    value="{{ form.host_phone_number.value|default:''|slice:'3:' }}" required />
+                </div>
+                <span data-bs-toggle="tooltip" data-bs-trigger="click"
+                  title="Only registered guests can see this number" class="d-inline-block ms-2 mb-2" tabindex="0">
+                  <i class="bi bi-info-circle-fill" style="font-size: 1.5em; cursor: pointer;"></i>
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-3 form-group">
+              {{ form.preferred_age_band.label_tag }}
+              {{ form.preferred_age_band }}
+            </div>
+
+            <div class="mb-3 form-group">
+              <label for="id_description">Description:</label>
+              <div>{{ form.description }}</div>
+            </div>
+
+            <input type="hidden" id="latitude" name="latitude">
+            <input type="hidden" id="longitude" name="longitude">
+
+            <button type="submit" class="btn btn-success my-3">
+              Create Event
+            </button>
+          </form>
+
+
+        </div>
+      </div>
+
+      <!-- second map column -->
+      <div class="col-md p-1 d-flex flex-column justify-content-center">
+        <div id="map"></div>
+      </div>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- lottie overlay -->
+<div id="loadingOverlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none;
+">
+  <canvas id="dotlottie-canvas" style="width: 300px; height: 300px;"></canvas>
+  <!-- lottie script -->
+</div>
+<script type="module">
+  import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
+
+  window.DotLottie = DotLottie; // expose to global scope
+</script>
+
+<script>
+  const recommendations = JSON.parse('{{ recommendations|escapejs }}');
+  const form = document.querySelector("form");
+  document.addEventListener("DOMContentLoaded", function () {
+    const eventDateInput = document.getElementById("id_event_date");
+    const phoneInput = document.querySelector('input[name="host_phone_number"]');
+
+    // calculate and format today's date in sydney time
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now).split('/'); // gives [dd, mm, yyyy] in en-AU
+
+    const [dd, mm, yyyy] = parts;
+    eventDateInput.min = `${yyyy}-${mm}-${dd}`;
+
+    // host phone number config
+    if (phoneInput) {
+      phoneInput.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, ""); // keep digits only
+      });
+    }
+    document.getElementById("recommendBtn").addEventListener("click", function () {
+      if (!recommendations || recommendations.length === 0) {
+        alert("No recommendations available.");
+        return;
+      }
+
+      const randomPick = recommendations[Math.floor(Math.random() * recommendations.length)];
+      document.getElementById("input").value = randomPick;
+
+      const service = new google.maps.places.PlacesService(map);
+      service.findPlaceFromQuery({
+          query: randomPick,
+          fields: ["name", "geometry", "formatted_address"]
+        },
+        function (results, status) {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+            const place = results[0];
+            const location = place.geometry.location;
+
+            // Clear existing markers
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+
+            // Add marker
+            const marker = new google.maps.Marker({
+              position: location,
+              map: map,
+              title: place.name
+            });
+            markers.push(marker);
+
+            // Center map
+            map.setCenter(location);
+            map.setZoom(14);
+
+            // Set hidden form inputs
+            document.getElementById("latitude").value = location.lat();
+            document.getElementById("longitude").value = location.lng();
+
+            // Update input to show full official address
+            input.value = `${place.name} – ${place.formatted_address}`;
+          } else {
+            alert("Could not locate this recommendation on the map.");
+          }
+        }
+      );
+    });
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    const mapDiv = document.getElementById("map");
+    initGoogle();
+  });
+
+  form.addEventListener("submit", function (e) {
+    const lat = document.getElementById("latitude").value;
+    const lng = document.getElementById("longitude").value;
+
+    if (!lat || !lng) {
+      e.preventDefault(); // Stop the form submission
+      alert("Please select a location from the map so a pin can be set.");
+      return false;
+    }
+    e.preventDefault(); // Prevent default submit
+
+    // Show loading overlay
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.style.display = "flex";
+
+    // Start the Lottie animation
+    const dotLottie = new window.DotLottie({
+      autoplay: true,
+      loop: true,
+      canvas: document.getElementById("dotlottie-canvas"),
+      src: "https://lottie.host/047bfc54-8fe2-42d2-9631-ac15e86e346b/c4UbKclfSF.lottie",
+    });
+
+    // Allow form to submit after a short delay 
+    setTimeout(() => {
+      form.submit();
+    }, 1000);
+  });
+
+  var map;
+  var markers = [];
+
+  function initGoogle() {
+
+    var defaultLocation = {
+      lat: -33.8688,
+      lng: 151.2093
+    };
+    var mapOptions = {
+      center: defaultLocation,
+      zoom: 12
+    };
+
+    function createMap(options) {
+      map = new google.maps.Map(document.getElementById("map"), options);
+      var input = document.getElementById("input");
+      var autocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: {
+          country: "au"
+        },
+        fields: ["geometry", "name", "formatted_address"],
+        types: ["geocode", "establishment"]
+      });
+
+      autocomplete.addListener("place_changed", function () {
+        var place = autocomplete.getPlace();
+        if (!place.geometry) {
+          console.log("No geometry for selected place");
+          return;
+        }
+
+        // Clear existing markers
+        markers.forEach(marker => marker.setMap(null));
+        markers = [];
+
+        map.setCenter(place.geometry.location);
+        map.setZoom(14);
+
+        var latitude = place.geometry.location.lat();
+        var longitude = place.geometry.location.lng();
+
+        document.getElementById("latitude").value = latitude;
+        document.getElementById("longitude").value = longitude;
+
+        input.value = `${place.name} – ${place.formatted_address}`;
+
+        const marker = new google.maps.Marker({
+          position: place.geometry.location,
+          map: map,
+          title: place.name
+        });
+        markers.push(marker);
+      });
+    }
+
+    createMap(mapOptions);
+  }
+</script>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&loading=async&libraries=places&callback=initGoogle">
+</script>
+
+{% endblock %}

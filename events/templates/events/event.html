@@ -1,0 +1,503 @@
+{% extends "app/main.html" %} {% load static %}{% block content %}
+
+
+<style>
+  .custom-form-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .custom-form-container h5 {
+    margin-right: 10px;
+  }
+
+  .profile-pic-main {
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .attendees-count {
+    font-size: 1.5em;
+    /* background-color: #d71421; */
+    padding: 5px 10px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  hr.style-one {
+    border: 0;
+    height: 1px;
+    background: #333;
+    background-image: linear-gradient(to right, #ccc, #333, #ccc);
+  }
+
+  /* comment styles */
+  #comments-container {
+    border-radius: 8px;
+    background: #f8f9fa;
+    max-height: 400px;
+    margin: 0;
+    overflow-y: auto;
+  }
+
+  #comments-container li {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    background: #ffffff;
+  }
+
+  #comments-container li:nth-child(even) {
+    background: #f0f0f0;
+  }
+
+  /* premium blur styles */
+  .premium-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    z-index: 5;
+  }
+
+  .premium-overlay .overlay-text {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #333;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  }
+
+  .premium-section input,
+  .premium-section label {
+    position: relative;
+    z-index: 1;
+  }
+</style>
+
+<!-- main section of page -->
+<section>
+  <div class="container">
+    {% if messages %}
+    <div>
+      {% for message in messages %}
+      <div class="alert 
+              {% if message.tags == 'error' %}alert-danger
+              {% elif message.tags == 'warning' %}alert-warning
+              {% elif message.tags == 'success' %}alert-success
+              {% else %}alert-info
+              {% endif %}
+              alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="row">
+      <div class="col-md">
+        <!-- left section -->
+        <section>
+          <h1 class="display-3 fw-bold text-center">{{event.event_title}}</h1>
+          {% if event.host.profile_pic %}
+          <img src="{{ event.host.profile_pic.url }}" class="profile-pic-main img-fluid" alt="{{ event.title }}">
+          {% else %}
+          <img src="{% static 'images/profile2.png' %}" class="profile-pic-main img-fluid" alt="{{ event.title }}">
+          {% endif %}
+
+          {% if is_host %}
+          <button class="btn btn-success btn-lg w-100 mt-3 mb-3" data-bs-toggle="modal"
+            data-bs-target="#sendInviteModal">
+            Send Event Invite +
+          </button>
+          <form id="cancel-event-form" method="post" action="{% url 'cancel_event' event.id %}"
+            class="custom-form-container">
+            {% csrf_token %}
+            <button type="button" name="host-cancel" value="cancel" class="btn btn-warning btn-lg w-100 mb-3"
+              data-bs-toggle="modal" data-bs-target="#confirmCancelModal">Cancel
+              Event</button>
+          </form>
+          {% endif %}
+
+          {% if request.user.email != event.host.user.email %}
+          {% if request.user.profile in event.guests.all %}
+          <form method="post" action="{% url 'remove_attendee' event.id %}" class="custom-form-container my-4">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-lg w-100 mb-3">Leave event</button>
+          </form>
+          {% else %}
+          <form id="request" method="post" action="{% url 'event' event.id %}"
+            class="custom-form-container mt-4 lottie-submit">
+            {% csrf_token %}
+            {% if button == 'pending' %}
+            <h3 class="btn btn-warning btn-lg w-100 mb-3">Request to Join Event Pending</h3>
+            {% elif button == 'denied' %}
+            <h3 class="btn btn-danger btn-lg w-100 mb-3">Join not Approved</h3>
+            {% else %}
+            {% if event.locked %}
+            <p><em>This event is no longer accepting requests</em></p>
+            {% elif total_current_attendees < event.total_attendees %}
+            <button type="submit" name="join-event" class="btn btn-primary btn-lg w-100 mb-3">Request to Join
+              Event</button>
+            {% else %}
+            <p><em>This event is full</em></p>
+            {% endif %}
+            {% endif %}
+          </form>
+          {% endif %}
+          {% endif %}
+
+          <div class="d-flex align-items-center">
+            <h2>Current Attendees </h2>
+            <div id="attendees-count" class="ms-2 attendees-count"
+              data-current-attendees="{{ total_current_attendees }}" data-total-attendees="{{ event.total_attendees }}">
+              <span class="current-attendees fw-bold text-white">{{ total_current_attendees }} /</span>
+              <span class="total-attendees text-white fw-bold">{{ event.total_attendees }}</span>
+            </div>
+          </div>
+
+          <ul class="attendees-list list-unstyled">
+            <li><a class="text-decoration-none" href="{% url 'profile' event.host.id %}"><img class="avatar img-fluid"
+                  src="{{ event.host.profile_pic.url }}" alt=""> {{event.host.user.first_name}}
+                {{event.host.user.last_name|slice:":1"}}</a><b>- Host</b></li>
+            <hr class="style-one">
+            {% for guest in event.guests.all %}
+            <li class="attendees-list-item"><a href="{% url 'profile' guest.user.profile.id %}"
+                class="text-decoration-none"><img class="avatar img-fluid" src="{{ guest.profile_pic.url }}" alt="">
+                {{ guest.user.first_name }} {{guest.user.last_name|slice:":1"}}</a></li>
+            <hr class="style-one">
+            {% endfor %}
+          </ul>
+
+
+
+        </section>
+      </div>
+
+
+
+
+      <div class="col-md">
+        <!-- right section -->
+        <section class="mt-3">
+          <p class="mt-4"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-person-arms-up me-2" viewBox="0 0 16 16">
+              <path d="M8 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3" />
+              <path
+                d="m5.93 6.704-.846 8.451a.768.768 0 0 0 1.523.203l.81-4.865a.59.59 0 0 1 1.165 0l.81 4.865a.768.768 0 0 0 1.523-.203l-.845-8.451A1.5 1.5 0 0 1 10.5 5.5L13 2.284a.796.796 0 0 0-1.239-.998L9.634 3.84a.7.7 0 0 1-.33.235c-.23.074-.665.176-1.304.176-.64 0-1.074-.102-1.305-.176a.7.7 0 0 1-.329-.235L4.239 1.286a.796.796 0 0 0-1.24.998l2.5 3.216c.317.316.475.758.43 1.204Z" />
+            </svg><strong>Host: </strong>{{event.host.user.first_name}} {{event.host.user.last_name|slice:":1"}}</p>
+          {% if is_guest %}
+          <p>
+            <i class="bi bi-telephone-fill me-2"></i>
+            <strong>Host Contact:</strong> {{ event.host_phone_number }}
+          </p>
+          {% endif %}
+          <p><i class="bi bi-geo-alt-fill me-2"></i><strong>Location: </strong>{{event.location}}</p>
+          <p><i class="bi bi-calendar-fill me-2"></i><strong>Date: </strong>{{event.event_date}}</p>
+          <p><i class="bi bi-clock-fill me-2"></i><strong>Time: </strong>{{event.event_time}}</p>
+          <p><i class="bi bi-person-plus-fill me-2"></i><strong>Attendees: </strong>{{event.total_attendees}}</p>
+          <p><i class="bi bi-cake2-fill me-2"></i><strong>Preferred age
+              band: </strong>{{ event.get_preferred_age_band_display }}</p>
+          <p><i class="bi bi-pencil-fill me-2"></i><strong>Description: </strong>{{event.description}}</p>
+          <div class="rounded mt-3" id="map" data-lat="{{ event.latitude }}" data-lng="{{ event.longitude }}"
+            style="height: 400px;"></div>
+          <hr class="style-one">
+          <hr class="style-one">
+
+
+
+          <!-- attendee chat section -->
+          {% if request.user.profile in event.guests.all or request.user.profile == event.host %}
+          <div>
+            <form method="post" action="{% url 'event' event.id %}" enctype="multipart/form-data" class="lottie-submit">
+              {% csrf_token %}
+              <div class="my-2">
+                <label for="comment" class="form-label">
+                  <h2>Attendee Chat:</h2>
+                </label>
+                <textarea id="comment" class="d-block w-100 h-50 form-control" name="comment_text"
+                  placeholder="Add a comment..." required></textarea>
+              </div>
+
+              <!-- image upload input -->
+              <div class="d-flex align-items-center my-2 gap-2">
+                <input type="file" id="comment_image" name="comment_image" accept=".jpg,.jpeg,.png" class="d-none">
+                <!-- hide the default input -->
+
+                <label for="comment_image" class="btn btn-outline-secondary">
+                  Choose image
+                </label>
+                <button type="submit" class="btn btn-success">Post Comment</button>
+              </div>
+              <span id="selected-file" class="ms-2"></span>
+
+            </form>
+          </div>
+          <div id="comments-container">
+
+            <ul class="list-unstyled mb-0">
+              {% if comments %}
+              {% for comment in comments %}
+              <li><strong>{{ comment.profile.user.first_name }}
+                  {{comment.profile.user.last_name|slice:":1"}}:</strong>
+                {{ comment.comment }}
+                <!-- display comment image -->
+                {% if comment.image %}
+                <div class="mt-2">
+                  <img src="{{ comment.image.url }}" alt="Comment image" width="300" class="img-thumbnail">
+                </div>
+                {% endif %}
+              </li>
+              {% endfor %}
+              {% else %}
+              <p>No comments yet</p>
+              {% endif %}
+            </ul>
+          </div>
+          {% else %}
+          <p><em>Join event to comment</em></p>
+          {% endif %}
+          <!-- attendee chat section -->
+
+
+
+          <!-- close off page  -->
+        </section>
+      </div>
+    </div>
+  </div>
+  </div>
+  </div>
+</section>
+
+<!-- lottie overlay -->
+<div id="loadingOverlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none;
+">
+  <canvas id="dotlottie-canvas" style="width: 300px; height: 300px;"></canvas>
+
+</div>
+
+<!-- Cancel Event Modal -->
+<div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-labelledby="confirmCancelModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="confirmDeleteModalLabel">Confirm Event Cancellation</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to cancel this event? All guests will be notified, and this action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="cancel-account-btn">Cancel Event</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Send Event Invite Modal -->
+<div class="modal fade" id="sendInviteModal" tabindex="-1" aria-labelledby="sendInviteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="sendInviteModalLabel">Send Event Invite</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{% url 'send_event_invite' event.id %}">
+        {% csrf_token %}
+        <div class="modal-body premium-section position-relative">
+          {% if not request.user.profile.is_premium %}
+          <a href="{% url 'subscribe' %}">
+            <div class="premium-overlay d-flex align-items-center justify-content-center">
+              <span class="overlay-text">👑 Friendi Premium</span>
+            </div>
+          </a>
+          {% endif %}
+          <input type="text" id="friend-search-invite" class="form-control mb-3" placeholder="Search friends...">
+          <ul id="friend-list-invite" class="list-group mb-3">
+            {% for friend in friends %}
+            <li class="list-group-item friend-item-invite" data-id="{{ friend.id }}">
+              <img src="{{ friend.profile_pic.url }}" class="avatar me-2">{{ friend }}
+            </li>
+            {% empty %}
+            <li class="list-group-item"><em>You have no friends to invite.</em></li>
+            {% endfor %}
+          </ul>
+          <input type="hidden" name="recipient_id" id="recipient-id-invite">
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success d-none" id="send-invite-btn">Send Invite</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- lottie script -->
+<script type="module">
+  import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
+
+  window.DotLottie = DotLottie; // expose to global scope
+</script>
+
+<script>
+  const latitude = parseFloat(document.getElementById('map').dataset.lat);
+  const longitude = parseFloat(document.getElementById('map').dataset.lng);
+  const forms = document.querySelectorAll('form.lottie-submit');
+
+  function initGoogle() {
+    var map;
+    var location = {
+      lat: latitude,
+      lng: longitude
+    };
+    var mapOptions = {
+      center: location,
+      zoom: 12
+    };
+
+    function createMap(options) {
+      map = new google.maps.Map(document.getElementById("map"), options);
+
+      new google.maps.Marker({
+        position: location,
+        map: map,
+        title: 'Event Location'
+      })
+    }
+
+    createMap(mapOptions);
+  }
+
+  window.addEventListener("load", function () {
+    const commentsContainer = document.getElementById("comments-container");
+    if (commentsContainer) {
+      commentsContainer.scrollTop = commentsContainer.scrollHeight;
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // general consts
+    const commentsContainer = document.getElementById("comments-container");
+    const button = document.getElementById("cancel-account-btn");
+    const attendeesCount = document.getElementById("attendees-count");
+    const currentAttendees = parseInt(attendeesCount.dataset.currentAttendees, 10);
+    const totalAttendees = parseInt(attendeesCount.dataset.totalAttendees, 10);
+    const fileInput = document.getElementById('comment_image');
+    const selectedFile = document.getElementById('selected-file');
+
+    // event invite consts
+    const searchInput = document.getElementById('friend-search-invite');
+    const friendItems = document.querySelectorAll('.friend-item-invite');
+    const recipientInput = document.getElementById('recipient-id-invite');
+    const sendBtn = document.getElementById('send-invite-btn');
+
+    // live search for event invites
+    searchInput.addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      friendItems.forEach(item => {
+        const name = item.textContent.toLowerCase();
+        item.style.display = name.includes(query) ? '' : 'none';
+      });
+    });
+
+    // select friend for event invites
+    friendItems.forEach(item => {
+      item.addEventListener('click', function () {
+        friendItems.forEach(f => f.classList.remove('active'));
+        this.classList.add('active');
+        recipientInput.value = this.dataset.id;
+        sendBtn.classList.remove('d-none');
+        searchInput.value = this.textContent.trim();
+      });
+    });
+
+    if (currentAttendees === totalAttendees - 1)
+      attendeesCount.style.backgroundColor = "orange";
+    else if (currentAttendees === totalAttendees)
+      attendeesCount.style.backgroundColor = "green";
+    else
+      attendeesCount.style.backgroundColor = "red";
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        selectedFile.textContent = fileInput.files[0].name;
+      } else {
+        selectedFile.textContent = '';
+      }
+    });
+
+    button.addEventListener("click", function () {
+      document.getElementById('cancel-event-form').submit();
+    });
+
+
+  });
+
+  forms.forEach(form => {
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); // Prevent default submit
+
+      // Show loading overlay
+      const overlay = document.getElementById("loadingOverlay");
+      overlay.style.display = "flex";
+
+      // Start the Lottie animation
+      const dotLottie = new window.DotLottie({
+        autoplay: true,
+        loop: true,
+        canvas: document.getElementById("dotlottie-canvas"),
+        src: "https://lottie.host/047bfc54-8fe2-42d2-9631-ac15e86e346b/c4UbKclfSF.lottie",
+      });
+
+      // Manually append hidden input to simulate button click
+      const hiddenInput = document.createElement("input");
+      hiddenInput.type = "hidden";
+      hiddenInput.name = "join-event";
+      form.appendChild(hiddenInput);
+
+      // Allow form to submit after a short delay 
+      setTimeout(() => {
+        form.submit();
+      }, 1000);
+    });
+  })
+</script>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&loading=async&libraries=places&callback=initGoogle">
+</script>
+
+{% endblock %}

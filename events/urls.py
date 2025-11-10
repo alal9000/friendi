@@ -15,4 +15,7 @@ urlpatterns = [
     ),
     path("event/<int:event_id>/cancel", views.cancel_event, name="cancel_event"),
     path("create", views.create, name="create"),
+    path(
+        "<int:event_id>/send_invite", views.send_event_invite, name="send_event_invite"
+    ),
 ]

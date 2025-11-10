@@ -7,7 +7,5 @@ venv/
 static/
 node_modules/
 node_modules/
-create.html
-event.html
 db.sqlite3
 scratch.md
