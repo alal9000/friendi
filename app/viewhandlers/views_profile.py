@@ -182,7 +182,7 @@ def profile(request, profile_id):
         # End clear status form
 
         # handle gallery image uploads
-        if request.user.profile == profile:
+        if request.user.is_authenticated and request.user.profile == profile:
             for i in range(4):
                 file_key = f"image_{i}"
                 if request.FILES.get(file_key):

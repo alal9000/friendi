@@ -262,10 +262,10 @@ def event(request, event_id):
 
     # get friends for event invites
     friends_as_sender = Friend.objects.filter(
-        sender=request.user.profile, status="accepted"
+        sender=event.host, status="accepted"
     ).values_list("receiver", flat=True)
     friends_as_receiver = Friend.objects.filter(
-        receiver=request.user.profile, status="accepted"
+        receiver=event.host, status="accepted"
     ).values_list("sender", flat=True)
     friend_ids = list(friends_as_sender) + list(friends_as_receiver)
     friends = Profile.objects.filter(id__in=friend_ids)
