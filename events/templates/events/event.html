@@ -328,8 +328,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="sendInviteModalLabel">Send Event Invite</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h1 class="modal-title fs-5" id="sendInviteModalLabel">Send Event</h1>
       </div>
 
       <form method="post" action="{% url 'send_event_invite' event.id %}">
@@ -345,7 +344,7 @@
           <input type="text" id="friend-search-invite" class="form-control mb-3" placeholder="Search friends...">
           <ul id="friend-list-invite" class="list-group mb-3">
             {% for friend in friends %}
-            <li class="list-group-item friend-item-invite" data-id="{{ friend.id }}">
+            <li class="list-group-item friend-item-invite" style="cursor: pointer;" data-id="{{ friend.id }}">
               <img src="{{ friend.profile_pic.url }}" class="avatar me-2">{{ friend }}
             </li>
             {% empty %}

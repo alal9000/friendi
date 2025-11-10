@@ -1,4 +1,5 @@
 import json
+import logging
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
@@ -430,6 +431,7 @@ def event_requests(request, profile_id):
 
 @login_required
 def send_event_invite(request, event_id):
+    logger = logging.getLogger(__name__)
     event = get_object_or_404(Event, id=event_id)
     host_profile = request.user.profile
 
@@ -449,6 +451,7 @@ def send_event_invite(request, event_id):
             ),
             status="accepted",
         ).exists()
+
         if not is_friend:
             messages.error(request, "You can only invite friends.")
             return redirect("event", event_id)
@@ -457,6 +460,7 @@ def send_event_invite(request, event_id):
             user=recipient,
             message__icontains=f"invited you to the event '{event.event_title}'",
         )
+
         if existing.exists():
             messages.warning(request, "You’ve already invited this friend.")
             return redirect("event", event_id)
@@ -467,6 +471,57 @@ def send_event_invite(request, event_id):
             message=f"{host_profile} invited you to the event '{event.event_title}'",
             link=f"/events/event/{event.id}",
         )
+        # End notification
+
+        # Send email
+
+        subject = f"You have been invited to event: '{event.event_title}'"
+        message = f"""
+            Hi there,
+
+            "{host_profile}" Invited you to the event "{event.event_title}", scheduled for:
+
+            📅 Date: {event.event_date}
+            🕒 Time: {event.event_time.strftime('%I:%M %p')}
+            📍 Location: {event.location or 'No location provided'}
+
+            Description:
+            {event.description}
+
+            See your event here: https://friendi.com.au/events/event/{event.id}
+
+            Hope you can make it!
+
+            Thanks, 
+            Friendi Team
+            """
+
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient.user.email],  # single recipient only
+            fail_silently=False,
+        )
+        # end send email
+
+        # send SMS
+        if recipient.is_premium:
+            try:
+                client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+                if recipient.phone_notifications_enabled and recipient.phone_number:
+                    sms_message = f"From Friendi: {host_profile} invited to you to the event, {event.event_title} at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
+                    client.messages.create(
+                        to=recipient.phone_number,
+                        from_=settings.TWILIO_FROM_NUMBER,
+                        body=sms_message,
+                    )
+
+            except TwilioException as e:
+                logger.exception("Twilio error during reminder SMS")
+
+        # end send SMS
 
         messages.success(request, f"Invite sent to {recipient.user.first_name}.")
         return redirect("event", event_id)

@@ -72,24 +72,24 @@ def send_event_reminders():
 
         subject = f"A Friendi Reminder: '{event.event_title}' is happening soon!"
         message = f"""
-Hi there,
+            Hi there,
 
-This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
+            This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
 
-📅 Date: {event.event_date}
-🕒 Time: {event.event_time.strftime('%I:%M %p')}
-📍 Location: {event.location or 'No location provided'}
+            📅 Date: {event.event_date}
+            🕒 Time: {event.event_time.strftime('%I:%M %p')}
+            📍 Location: {event.location or 'No location provided'}
 
-Description:
-{event.description}
+            Description:
+            {event.description}
 
-See your event here: https://friendi.com.au/events/event/{event.id}
+            See your event here: https://friendi.com.au/events/event/{event.id}
 
-See you there!
+            See you there!
 
-Thanks, 
-Friendi Team
-"""
+            Thanks, 
+            Friendi Team
+            """
 
         for email in emails:
             send_mail(
