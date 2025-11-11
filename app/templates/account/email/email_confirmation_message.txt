@@ -1,6 +1,6 @@
 Hi {{ user.first_name }},
 
-Thank you for signing up for Friendi!
+Thank you for signing up for friendi!
 
 Please click the link below to confirm your email address:
 
@@ -9,4 +9,4 @@ Please click the link below to confirm your email address:
 If you did not create an account, you can ignore this message.
 
 Thanks,
-The Friendi Team
+The friendi Team

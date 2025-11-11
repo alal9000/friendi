@@ -47,7 +47,6 @@ urlpatterns = [
         name="profile_settings",
     ),
     # stripe urls
-    path("subscribe", views.subscribe, name="subscribe"),
     path("cancel", views.cancel, name="cancel"),
     path("success", views.success, name="success"),
     path(
@@ -56,13 +55,14 @@ urlpatterns = [
         name="create-checkout-session",
     ),
     path(
-        "direct-to-customer-portal",
-        views.direct_to_customer_portal,
-        name="direct-to-customer-portal",
+        "portal",
+        views.portal,
+        name="portal",
     ),
     path(
         "collect-stripe-webhook",
         views.collect_stripe_webhook,
         name="collect-stripe-webhook",
     ),
+    # end stripe urls
 ]

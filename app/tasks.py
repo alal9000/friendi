@@ -70,11 +70,11 @@ def send_event_reminders():
             logger.info(f"No email-enabled attendees for event: {event.event_title}")
             continue
 
-        subject = f"A Friendi Reminder: '{event.event_title}' is happening soon!"
+        subject = f"A friendi Reminder: '{event.event_title}' is happening soon!"
         message = f"""
             Hi there,
 
-            This is a Friendi reminder that the event "{event.event_title}" is scheduled for:
+            This is a friendi reminder that the event "{event.event_title}" is scheduled for:
 
             📅 Date: {event.event_date}
             🕒 Time: {event.event_time.strftime('%I:%M %p')}
@@ -88,7 +88,7 @@ def send_event_reminders():
             See you there!
 
             Thanks, 
-            Friendi Team
+            friendi Team
             """
 
         for email in emails:
@@ -106,7 +106,7 @@ def send_event_reminders():
 
             for attendee in attendees:
                 if attendee.phone_notifications_enabled and attendee.phone_number:
-                    sms_message = f"From Friendi: This is a Friendi Reminder, '{event.event_title}' is happening soon at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
+                    sms_message = f"From friendi: This is a friendi Reminder, '{event.event_title}' is happening soon at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
                     client.messages.create(
                         to=attendee.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,

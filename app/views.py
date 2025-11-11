@@ -1,14 +1,15 @@
 import re
 import os
-import json
 import environ
 import stripe
 from stripe import Webhook, SignatureVerificationError
 from django.core.validators import validate_email
+from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.utils.text import capfirst
 from django.shortcuts import render, redirect, reverse
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
@@ -19,7 +20,6 @@ from allauth.account.views import SignupView, LoginView
 from django.db.models import Q, Count, F, Value
 from django.db.models.functions import Coalesce
 from django.contrib.auth.models import User
-from django.contrib.auth import login
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 
@@ -213,11 +213,7 @@ def tos(request):
 
 
 # stripe views
-def subscribe(request) -> HttpResponse:
-    return render(request, "app/subscribe.html")
-
-
-def cancel(request) -> HttpResponse:
+def cancel(request):
     return render(request, "app/cancel.html")
 
 
@@ -241,7 +237,8 @@ def success(request):
     return render(request, "app/success.html", context)
 
 
-def create_checkout_session(request) -> HttpResponse:
+@login_required(login_url="account_login")
+def create_checkout_session(request):
     price_lookup_key = request.POST["price_lookup_key"]
     try:
         prices = stripe.Price.list(
@@ -280,13 +277,26 @@ def create_checkout_session(request) -> HttpResponse:
         return HttpResponse("Server error", status=500)
 
 
-def direct_to_customer_portal(request) -> HttpResponse:
+def portal(request):
     """
     Creates a customer portal for the user to manage their subscription.
     """
-    checkout_record = CheckoutSessionRecord.objects.filter(
-        user=request.user
-    ).last()  # For demo purposes, we get the last checkout session record the user created.
+    checkout_record = (
+        CheckoutSessionRecord.objects.filter(
+            user=request.user,
+            stripe_customer_id__isnull=False,
+            stripe_customer_id__gt="",
+            has_access=True,
+            is_completed=True,
+        )
+        .order_by("-id")
+        .first()
+    )
+
+    if not checkout_record:
+        # Handle case where user has no active/completed subscription
+        messages.error(request, "No active subscription found.")
+        return redirect("home")
 
     checkout_session = stripe.checkout.Session.retrieve(
         checkout_record.stripe_checkout_session_id
@@ -295,13 +305,13 @@ def direct_to_customer_portal(request) -> HttpResponse:
     portal_session = stripe.billing_portal.Session.create(
         customer=checkout_session.customer,
         return_url=env("DOMAIN")
-        + reverse("subscribe"),  # Send the user here from the portal.
+        + reverse("home"),  # Send the user here from the portal.
     )
     return redirect(portal_session.url, code=303)
 
 
 @csrf_exempt
-def collect_stripe_webhook(request) -> JsonResponse:
+def collect_stripe_webhook(request):
     """
     Stripe sends webhook events to this endpoint.
     We verify the webhook signature and updates the database record.
@@ -324,7 +334,7 @@ def collect_stripe_webhook(request) -> JsonResponse:
     return JsonResponse({"status": "success"})
 
 
-def _update_record(webhook_event) -> None:
+def _update_record(webhook_event):
     """
     We update our database record based on the webhook event.
 
@@ -353,6 +363,29 @@ def _update_record(webhook_event) -> None:
             profile = checkout_record.user.profile
             profile.is_premium = True
             profile.save()
+
+    elif event_type == "invoice.payment_failed":
+        # Payment failed for an existing subscription (renewal, etc.)
+        customer_id = data_object["customer"]
+        checkout_record = CheckoutSessionRecord.objects.filter(
+            stripe_customer_id=customer_id
+        ).last()
+
+        if checkout_record:
+            checkout_record.has_access = False
+            checkout_record.is_completed = True
+            checkout_record.save()
+
+            profile = checkout_record.user.profile
+            profile.is_premium = False
+            profile.save()
+
+            send_mail(
+                subject="Your friendi Premium payment failed",
+                message="We couldn't process your latest payment. Please update your card details in the friendi portal.",
+                from_email="support@friendi.com",
+                recipient_list=[checkout_record.user.email],
+            )
 
     elif event_type == "customer.subscription.deleted":
         checkout_record = CheckoutSessionRecord.objects.get(

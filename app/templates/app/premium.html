@@ -20,22 +20,26 @@
   }
 </style>
 
-<header>
-  <p>Hi {{ request.user.first_name }}, Friendi Premium users get access to additional Friendi features such as:</p>
+<section class="ms-3">
+  {% if request.user.is_authenticated %}
+  <h1>Hi, {{ request.user.first_name }} 👋</h1>
+  {% endif %}
+
+  <h4>friendi Premium users get access to additional features such as:</h4>
   <ul>
-    <li>Additional photo storage on your profile.</li>
-    <li>Send event invitations to your friends as host.</li>
+    <li>Additional photo storage on your profile</li>
     <li>SMS notifications</li>
+    <li>Send event invitations to your friends as host</li>
   </ul>
   <p>Sign up below</p>
-</header>
+</section>
 
 <section>
   <!--        Show product details-->
   <div class="product">
     <div class="description">
-      <h3>Friendi Premium</h3>
-      <h5>$2.35 / month</h5>
+      <h3>👑 friendi Premium</h3>
+      <h5 class="text-center">$3.50 / month</h5>
     </div>
   </div>
 
@@ -45,7 +49,11 @@
 
     <!-- Add a hidden field with the lookup_key of your stripe Price -->
     <input type="hidden" name="price_lookup_key" value="premium_monthly" />
-    <button id="checkout-and-portal-button" type="submit">Checkout</button>
+    {% if request.user.is_authenticated %}
+    <button class="btn btn-success" id="checkout-and-portal-button" type="submit">Checkout</button>
+    {% else %}
+    <a href="{% url 'account_login' %}" class="btn btn-success">Login to checkout</a>
+    {% endif %}
   </form>
 </section>
 

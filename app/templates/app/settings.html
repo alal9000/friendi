@@ -55,7 +55,7 @@
   <div class="row">
     <div class="col viewport-height">
       <a class="btn btn-warning my-3" href="{% url 'profile' profile.id %}">Go Back</a>
-      <!-- user detail form -->
+      <!-- user details -->
       <div class="card card-body mt-2">
         <h5 class="card-title">User Details</h5>
         <form method="POST" action="" enctype="multipart/form-data">
@@ -103,9 +103,9 @@
           {{ profile_form.phone_number.label_tag }}
           <div class="premium-section position-relative mb-3">
             {% if not profile.is_premium %}
-            <a href="{% url 'subscribe' %}">
+            <a href="{% url 'premium' %}">
               <div class="premium-overlay d-flex align-items-center justify-content-center">
-                <span class="overlay-text">👑 Friendi Premium</span>
+                <span class="overlay-text">👑 friendi Premium</span>
               </div>
             </a>
             {% endif %}
@@ -125,10 +125,16 @@
             </div>
           </div>
 
-          <input class="btn btn-success" type="submit" name="user-details" value="update-details">
+          <input class="btn btn-success" type="submit" name="user-details" value="Update">
         </form>
       </div>
+      <!-- billing details -->
       <div class="card card-body mt-2">
+        <h5 class="card-title">Billing Details</h5>
+        <p class="m-0 me-2">Update Billing Details: <a href="{% url 'portal' %}" class="btn btn-success">Update</a></p>
+      </div>
+      <!-- profile details -->
+      <div class="card card-body mt-2 mb-2">
         <h5 class="card-title">Profile Details</h5>
         <form method="POST" action="" class="mt-2 d-flex align-items-center">
           {% csrf_token %}

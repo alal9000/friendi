@@ -190,7 +190,7 @@ def event(request, event_id):
                         and attendee.phone_number
                     ):
                         sms_message = (
-                            f"From Friendi: {commenter_name} commented on '{event.event_title}':\n"
+                            f"From friendi: {commenter_name} commented on '{event.event_title}':\n"
                             f'"{comment_text}"\n'
                             f"See your event here: https://friendi.com.au/events/event/{event.id}"
                         )
@@ -328,7 +328,7 @@ def cancel_event(request, event_id):
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
             for attendee in attendees:
                 if attendee.phone_notifications_enabled and attendee.phone_number:
-                    sms_message = f'From Friendi: The event "{event_title}" has been cancelled by the host.'
+                    sms_message = f'From friendi: The event "{event_title}" has been cancelled by the host.'
                     client.messages.create(
                         to=attendee.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,
@@ -493,7 +493,7 @@ def send_event_invite(request, event_id):
             Hope you can make it!
 
             Thanks, 
-            Friendi Team
+            friendi Team
             """
 
         send_mail(
@@ -511,7 +511,7 @@ def send_event_invite(request, event_id):
                 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
                 if recipient.phone_notifications_enabled and recipient.phone_number:
-                    sms_message = f"From Friendi: {host_profile} invited to you to the event, {event.event_title} at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
+                    sms_message = f"From friendi: {host_profile} invited to you to the event, {event.event_title} at {event.event_time.strftime('%I:%M %p')}. See your event here: https://friendi.com.au/events/event/{event.id}"
                     client.messages.create(
                         to=recipient.phone_number,
                         from_=settings.TWILIO_FROM_NUMBER,

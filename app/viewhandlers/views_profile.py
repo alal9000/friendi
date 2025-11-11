@@ -51,7 +51,7 @@ def profile(request, profile_id):
     ):
         messages.success(
             request,
-            "Your support helps keep us growing. Tell your friends and family about Friendi or invite them below.",
+            "Your support helps us grow. Tell your friends and family about friendi or invite them below.",
         )
         # Set the session flag to indicate that the message has been shown
         request.session["profile_support_message_shown"] = True
@@ -259,10 +259,10 @@ def profile(request, profile_id):
                 # Send an email invitation
                 message = (
                     f"Hi, <a href='https://friendi.com.au/accounts/profile/{request.user.profile.id}'>{request.user.first_name} {request.user.last_name}</a> "
-                    "has invited you to join Friendi. Make new friends and attend events in Sydney. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
+                    "has invited you to join friendi. Make new friends and attend events in Sydney. Sign up at: <a href='https://friendi.com.au/accounts/signup/'>friendi.com.au/accounts/signup</a>"
                 )
                 send_mail(
-                    "Invitation to Friendi",
+                    "Invitation to friendi",
                     "",
                     settings.EMAIL_HOST_USER,
                     [email],
