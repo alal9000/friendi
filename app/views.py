@@ -1,6 +1,7 @@
 import re
 import os
 import environ
+import logging
 import stripe
 from stripe import Webhook, SignatureVerificationError
 from django.core.validators import validate_email
@@ -40,6 +41,9 @@ else:
 
 # stripe config
 stripe.api_key = env("STRIPE_SECRET_KEY")
+
+# prepare logger
+logger = logging.getLogger(__name__)
 
 
 # function based views
@@ -314,7 +318,7 @@ def portal(request):
 def collect_stripe_webhook(request):
     """
     Stripe sends webhook events to this endpoint.
-    We verify the webhook signature and updates the database record.
+    We verify the webhook signature and update the database record.
     """
     webhook_secret = env("STRIPE_WEBHOOK_SECRET").strip()
     signature = request.META["HTTP_STRIPE_SIGNATURE"]
@@ -350,9 +354,19 @@ def _update_record(webhook_event):
         if user_id:
             user = User.objects.get(id=user_id)
 
-            checkout_record = CheckoutSessionRecord.objects.get(
-                stripe_checkout_session_id=data_object["id"]
-            )
+            try:
+                checkout_record = CheckoutSessionRecord.objects.get(
+                    stripe_checkout_session_id=data_object["id"]
+                )
+            except CheckoutSessionRecord.DoesNotExist:
+                logger.warning(f"No checkout session found for {data_object.get('id')}")
+                return
+            except CheckoutSessionRecord.MultipleObjectsReturned:
+                logger.error(
+                    f"Multiple checkout records found for {data_object.get('id')}"
+                )
+                return
+
             checkout_record.user = user
             checkout_record.stripe_customer_id = data_object["customer"]
             checkout_record.has_access = True
@@ -368,12 +382,13 @@ def _update_record(webhook_event):
         # Payment failed for an existing subscription (renewal, etc.)
         customer_id = data_object["customer"]
         checkout_record = CheckoutSessionRecord.objects.filter(
-            stripe_customer_id=customer_id
+            stripe_customer_id__isnull=False,
+            stripe_customer_id__gt="",
+            stripe_customer_id=customer_id,
         ).last()
 
         if checkout_record:
             checkout_record.has_access = False
-            checkout_record.is_completed = True
             checkout_record.save()
 
             profile = checkout_record.user.profile
@@ -382,17 +397,55 @@ def _update_record(webhook_event):
 
             send_mail(
                 subject="Your friendi Premium payment failed",
-                message="We couldn't process your latest payment. Please update your card details in the friendi portal.",
+                message="We couldn't process your latest payment. Please update your card details on your profile user settings.",
+                from_email="support@friendi.com",
+                recipient_list=[checkout_record.user.email],
+            )
+
+    elif event_type == "invoice.payment_succeeded":
+        if data_object.get("billing_reason") == "subscription_create":
+            return
+
+        customer_id = data_object["customer"]
+        checkout_record = CheckoutSessionRecord.objects.filter(
+            stripe_customer_id__isnull=False,
+            stripe_customer_id__gt="",
+            stripe_customer_id=customer_id,
+        ).last()
+
+        if checkout_record:
+            checkout_record.has_access = True
+            checkout_record.save()
+
+            profile = checkout_record.user.profile
+            profile.is_premium = True
+            profile.save()
+
+            send_mail(
+                subject="Your friendi Premium payment succeeded",
+                message="Your friendi Premium subscription has been renewed successfully!",
                 from_email="support@friendi.com",
                 recipient_list=[checkout_record.user.email],
             )
 
     elif event_type == "customer.subscription.deleted":
-        checkout_record = CheckoutSessionRecord.objects.get(
-            stripe_customer_id=data_object["customer"]
-        )
+
+        try:
+            checkout_record = CheckoutSessionRecord.objects.get(
+                stripe_customer_id=data_object["customer"]
+            )
+        except CheckoutSessionRecord.DoesNotExist:
+            logger.warning(
+                f"No checkout session found for {data_object.get('customer')}"
+            )
+            return
+        except CheckoutSessionRecord.MultipleObjectsReturned:
+            logger.error(
+                f"Multiple checkout records found for {data_object.get('customer')}"
+            )
+            return
+
         checkout_record.has_access = False
-        checkout_record.is_completed = True
         checkout_record.save()
 
         # Update profile
